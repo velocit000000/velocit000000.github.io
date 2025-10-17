@@ -10,7 +10,8 @@ slam-evaluator/
 ├── backend/
 │   ├── app.py
 │   └── evaluator.py
-└── README.mdimport React, { useState } from 'react';
+└── README.md
+import React, { useState } from 'react';
 import axios from 'axios';
 
 function InputForm({ onResult }) {
@@ -67,7 +68,8 @@ function InputForm({ onResult }) {
   );
 }
 
-export default InputForm;function ResultCard({ result }) {
+export default InputForm;
+function ResultCard({ result }) {
   return (
     <div>
       <h2>총 적합도 점수: {result.total_score}점</h2>
@@ -90,7 +92,8 @@ export default InputForm;function ResultCard({ result }) {
   );
 }
 
-export default ResultCard;import React, { useState } from 'react';
+export default ResultCard;
+import React, { useState } from 'react';
 import InputForm from './components/InputForm';
 import ResultCard from './components/ResultCard';
 
@@ -106,7 +109,8 @@ function App() {
   );
 }
 
-export default App;{
+export default App;
+{
   "name": "slam-evaluator-frontend",
   "version": "1.0.0",
   "dependencies": {
@@ -118,7 +122,8 @@ export default App;{
   "scripts": {
     "start": "react-scripts start"
   }
-}def calculate_score(data):
+}
+def calculate_score(data):
     score = 0
     score += min(100, int(data['weekday_lunch']) / 800 * 100) * 0.25
     score += min(100, int(data['estimated_sales']) / 15000 * 100) * 0.20
@@ -139,7 +144,8 @@ def generate_swot(data):
         o.append("경쟁이 적어 브랜드 확장에 유리한 입지입니다.")
     if int(data['estimated_sales']) < 12000:
         t.append("상권 매출이 낮아 초기 수익 확보에 어려움이 예상됩니다.")
-    return {"강점": s, "약점": w, "기회": o, "위협": t}from flask import Flask, request, jsonify
+    return {"강점": s, "약점": w, "기회": o, "위협": t}
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from evaluator import calculate_score, generate_swot
 
@@ -167,7 +173,7 @@ def evaluate():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True
+    app.run(debug=True)
 # 슬램버거 입점 적합도 평가 웹도구
 
 서울 수도권 내 입점 후보지를 평가하여 총점과 SWOT 분석을 제공하는 웹 애플리케이션입니다.
@@ -183,9 +189,9 @@ if __name__ == '__main__':
 ### 1. 백엔드 실행
 
 ```bash
-          cd frontend
-npm install
-npm start
 cd backend
 pip install flask flask-cors
 python app.py
+cd frontend
+npm install
+npm start
