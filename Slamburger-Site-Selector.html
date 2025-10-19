@@ -52,7 +52,7 @@ if(!addr){ alert('주소를 입력하세요!'); return; }
 
 // 1️⃣ 주소 → 좌표 변환
 const geocodeUrl = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}`;
-const res = await fetch(geocodeUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY' } });
+const res = await fetch(geocodeUrl, { headers: { Authorization: '7ac6f2a9944d918ae5650b2d2d8935c1' } });
 const data = await res.json();
 if(!data.documents.length){ alert('주소를 찾을 수 없어요 😢'); return; }
 
@@ -63,7 +63,7 @@ initMap(y, x);
 
 // 2️⃣ 주변 햄버거 가게 검색
 const nearUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('햄버거')}&x=${x}&y=${y}&radius=500&size=15`;
-const nearRes = await fetch(nearUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY' } });
+const nearRes = await fetch(nearUrl, { headers: { Authorization: '7ac6f2a9944d918ae5650b2d2d8935c1' } });
 const nearData = await nearRes.json();
 const competitorCount = nearData.documents.length;
 
@@ -77,7 +77,7 @@ marker.setMap(map);
 
 // 3️⃣ 서울시 상권분석 API 예시 (단순 유동인구 샘플 호출)
 // 실제 데이터는 서울열린데이터 광장의 API ID로 교체 필요
-const seoulData = await fetch(`https://data.seoul.go.kr/api/your_key/your_dataset?LAT=${y}&LNG=${x}`)
+const seoulData = await fetch(`https://data.seoul.go.kr/api/49784e486a76656c38316a5057685a/your_dataset?LAT=${y}&LNG=${x}`)
 .then(r => r.json()).catch(()=>({footTraffic:Math.random()*1000}));
 
 
