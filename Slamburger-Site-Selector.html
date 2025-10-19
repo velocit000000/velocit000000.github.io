@@ -54,4 +54,80 @@ if(!addr){ alert('주소를 입력하세요!'); return; }
 const geocodeUrl = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}`;
 const res = await fetch(geocodeUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY' } });
 const data = await res.json();
-</ht
+if(!data.documents.length){ alert('주소를 찾을 수 없어요 😢'); return; }
+
+
+const {x, y} = data.documents[0];
+initMap(y, x);
+
+
+// 2️⃣ 주변 햄버거 가게 검색
+const nearUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('햄버거')}&x=${x}&y=${y}&radius=500&size=15`;
+const nearRes = await fetch(nearUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY' } });
+const nearData = await nearRes.json();
+const competitorCount = nearData.documents.length;
+
+
+// 지도에 마커 표시
+nearData.documents.forEach(p => {
+const marker = new kakao.maps.Marker({ position: new kakao.maps.LatLng(p.y, p.x) });
+marker.setMap(map);
+});
+
+
+// 3️⃣ 서울시 상권분석 API 예시 (단순 유동인구 샘플 호출)
+// 실제 데이터는 서울열린데이터 광장의 API ID로 교체 필요
+const seoulData = await fetch(`https://data.seoul.go.kr/api/your_key/your_dataset?LAT=${y}&LNG=${x}`)
+.then(r => r.json()).catch(()=>({footTraffic:Math.random()*1000}));
+
+
+const traffic = seoulData.footTraffic || Math.random()*800 + 200;
+
+
+// 4️⃣ 점수 계산 (가중치 기반)
+let compScore = Math.max(0, 100 - competitorCount*7);
+let trafficScore = Math.min(100, (traffic/1000)*100);
+let totalScore = Math.round(compScore*0.4 + trafficScore*0.6);
+
+
+const swot = {
+Strengths: compScore>70 ? '경쟁점 적고 교통 좋음' : '보통',
+Weaknesses: competitorCount>8 ? '경쟁 치열' : '소수 경쟁',
+Opportunities: '유동인구 증가 추세 가능',
+Threats: competitorCount>10 ? '대형 체인 밀집지역' : '리스크 낮음'
+};
+
+
+// 5️⃣ 결과 표시 + 그래프
+const resultDiv = document.getElementById('result');
+resultDiv.innerHTML = `
+<h3>📊 분석 결과</h3>
+<p><b>예상 점수:</b> ${totalScore} / 100</p>
+<p><b>경쟁업체 수:</b> ${competitorCount}</p>
+<p><b>유동인구 지표:</b> ${traffic.toFixed(0)}</p>
+<canvas id="scoreChart"></canvas>
+<pre>${JSON.stringify(swot, null, 2)}</pre>
+`;
+
+
+const ctx = document.getElementById('scoreChart').getContext('2d');
+new Chart(ctx, {
+type: 'bar',
+data: {
+labels: ['경쟁점', '유동인구', '총점'],
+datasets: [{
+label: '점수 구성',
+data: [compScore, trafficScore, totalScore],
+backgroundColor: ['#ff6666','#ffcc00','#66cc66']
+}]
+},
+options: { scales: { y: { beginAtZero: true, max:100 } } }
+});
+}
+
+
+window.onload = () => initMap();
+</script>
+</body>
+</html>
+```
