@@ -5,88 +5,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Slamburger 상권분석 판별기 🍔</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body { font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; }
-  header { background: #ff9f00; color: white; text-align: center; padding: 1em; }
-  #app { display: flex; flex-direction: column; align-items: center; padding: 1em; }
-  input { padding: 0.5em; width: 300px; margin-right: 0.5em; }
-  button { padding: 0.5em 1em; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer; }
-  #map { width: 90%; height: 500px; margin-top: 1em; border: 1px solid #ddd; }
-  #result { width: 90%; margin-top: 1em; }
-  pre { background: #f7f7f7; padding: 1em; border-radius: 8px; }
+body { font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; background: #fff7ee; }
+header { background: #ff7a00; color: white; text-align: center; padding: 1em; }
+#app { display: flex; flex-direction: column; align-items: center; padding: 1em; }
+input { padding: 0.5em; width: 300px; margin-right: 0.5em; border: 1px solid #ccc; border-radius: 6px; }
+button { padding: 0.5em 1em; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer; }
+#map { width: 90%; height: 450px; margin-top: 1em; border-radius: 10px; overflow: hidden; }
+#result { width: 90%; margin-top: 1em; background: white; padding: 1em; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+pre { background: #f7f7f7; padding: 1em; border-radius: 8px; overflow-x: auto; }
+canvas { width: 100%; height: 250px; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>🍔 Slamburger 상권분석 판별기</h1>
-  </header>
+<header>
+<h1>🍔 Slamburger 상권분석 판별기 (고급 버전)</h1>
+</header>
 
-  <div id="app">
-    <p>원하는 주소를 입력하고 [분석하기]를 눌러보세요!</p>
-    <div>
-      <input id="addressInput" placeholder="예: 서울특별시 강남구 역삼동" />
-      <button onclick="analyzeLocation()">분석하기</button>
-    </div>
-    <div id="map"></div>
-    <div id="result"></div>
-  </div>
 
-  <!-- 카카오 지도 SDK -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=여기에_카카오_JAVASCRIPT_KEY_입력&libraries=services"></script>
-  <script>
-    let map;
-    function initMap(lat=37.5665, lng=126.9780){
-      const container = document.getElementById('map');
-      const options = { center: new kakao.maps.LatLng(lat, lng), level: 3 };
-      map = new kakao.maps.Map(container, options);
-    }
+<div id="app">
+<p>주소를 입력하면 서울시 상권 데이터 + 경쟁점 + SWOT 분석 점수를 보여줘요!</p>
+<div>
+<input id="addressInput" placeholder="예: 서울특별시 강남구 역삼동" />
+<button onclick="analyzeLocation()">분석하기</button>
+</div>
+<div id="map"></div>
+<div id="result"></div>
+</div>
 
-    async function analyzeLocation(){
-      const addr = document.getElementById('addressInput').value;
-      if(!addr){ alert('주소를 입력하세요!'); return; }
 
-      // 1️⃣ 주소 → 좌표 변환
-      const geocodeUrl = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}`;
-      const response = await fetch(geocodeUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY_입력' } });
-      const data = await response.json();
-      if(!data.documents || data.documents.length === 0){ alert('주소를 찾을 수 없어요 😢'); return; }
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=여기에_카카오_JS_KEY&libraries=services"></script>
+<script>
+let map;
+function initMap(lat=37.5665, lng=126.9780){
+const container = document.getElementById('map');
+const options = { center: new kakao.maps.LatLng(lat, lng), level: 4 };
+map = new kakao.maps.Map(container, options);
+}
 
-      const {x, y} = data.documents[0];
-      initMap(y, x);
 
-      // 2️⃣ 주변 햄버거 가게 검색
-      const nearbyUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('햄버거')}&x=${x}&y=${y}&radius=500&size=15`;
-      const nearbyRes = await fetch(nearbyUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY_입력' } });
-      const nearby = await nearbyRes.json();
+async function analyzeLocation(){
+const addr = document.getElementById('addressInput').value;
+if(!addr){ alert('주소를 입력하세요!'); return; }
 
-      // 지도에 마커 표시
-      nearby.documents.forEach(place => {
-        const marker = new kakao.maps.Marker({ position: new kakao.maps.LatLng(place.y, place.x) });
-        marker.setMap(map);
-      });
 
-      // 3️⃣ SWOT + 점수 계산 (단순 로직)
-      const competitorCount = nearby.documents.length;
-      let score = 100 - competitorCount * 5;
-      if(score < 10) score = 10;
-
-      const swot = {
-        Strengths: competitorCount < 3 ? '경쟁이 적음 👍' : '위치 좋음',
-        Weaknesses: competitorCount > 5 ? '경쟁이 많음 ⚠️' : '보통 수준',
-        Opportunities: '유동인구와 배달 수요가 높을 가능성',
-        Threats: '대형 프랜차이즈 근처 위험',
-      };
-
-      // 결과 표시
-      document.getElementById('result').innerHTML = `
-        <h3>📊 분석 결과</h3>
-        <p><strong>예상 점수:</strong> ${score} / 100</p>
-        <pre>${JSON.stringify(swot, null, 2)}</pre>
-      `;
-    }
-
-    window.onload = () => initMap();
-  </script>
-</body>
-</html>
-```
+// 1️⃣ 주소 → 좌표 변환
+const geocodeUrl = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}`;
+const res = await fetch(geocodeUrl, { headers: { Authorization: 'KakaoAK 여기에_카카오_REST_API_KEY' } });
+const data = await res.json();
+</ht
