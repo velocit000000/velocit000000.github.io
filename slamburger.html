@@ -1,0 +1,133 @@
+{
+  "name": "slamburger-auto-presentation",
+  "type": "code/react",
+  "content": `
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+
+const slides = [
+  {
+    title: "맛의 슬램! 양의 슬램!",
+    subtitle: "버거와 라이스가 펼치는 완전한 한 판 KO!",
+    content: "AI로 매장을 관리하는 푸드테크 프랜차이즈 — SLAMBURGER",
+  },
+  {
+    title: "WHY SLAMBURGER?",
+    content:
+      "운영이 쉬워야 수익이 남는다. AI로 운영하는 Restogenie 시스템을 통해 대학로점 첫 달 매출 1억 달성! 원가 38%, 수익률 20%, 로열티 3%, 20평부터 가능한 실속형 창업.",
+  },
+  {
+    title: "브랜드 스토리",
+    content:
+      "2023 강남역 1호점 오픈 → 2024 대학로점 오픈(첫달 매출 1억) → 2025 전국 확장과 함께 Restogenie 프랜차이즈 본격화.",
+  },
+  {
+    title: "실매장 성과",
+    content:
+      "강남역점: 안정적 운영 중 | 대학로점: 첫달 매출 1억 달성, 라이스버거 인기, 재방문율 60%",
+  },
+  {
+    title: "핵심 경쟁력 — Restogenie",
+    content:
+      "매출, 재고, 인력, 마케팅을 모두 AI로 통합 관리. 발주 자동화, 재고 예측, 리포트 자동 생성, 모바일 실시간 관리 지원.",
+    link: "https://ctrl-mkt.github.io/pilot/restogenie/index.html#features",
+  },
+  {
+    title: "점주의 변화",
+    content:
+      "운영은 AI에게, 점주는 성장에 집중! 직원 관리·재고·매출 확인을 모두 자동화하여 본업 병행 가능. 진정한 1인 운영형 매장 실현.",
+  },
+  {
+    title: "수익 구조",
+    content:
+      "월 평균 매출 약 1억 | 원가율 38% | 로열티 3% | 순이익 약 20% | 회수기간 18~24개월 (상권별 차이)",
+  },
+  {
+    title: "가맹 조건 & 혜택",
+    content:
+      "개설면적: 20평 이상 | 창업비용: 1.5~2억 | 로열티: 3% | 10호점 한정 혜택 — 레스토지니 1년 무상 / 교육비 면제 / 마케팅비 지원",
+  },
+  {
+    title: "점주 후기",
+    content:
+      "“매출, 재고, 직원관리를 전부 휴대폰으로 합니다. 본업이 있어도 운영이 가능해요.” — 대학로점 점주",
+  },
+  {
+    title: "성장 전략",
+    content:
+      "1️⃣ 수도권 10호점 구축 → 2️⃣ 전국 가맹망 확장 → 3️⃣ Restogenie SaaS 외부 공급 → 4️⃣ 시즌 콜라보 메뉴 개발",
+  },
+  {
+    title: "창업 절차",
+    content:
+      "상담 신청 → 상권 분석 → 계약 및 교육 → 인테리어 → 오픈 → AI 시스템 세팅 및 데이터 피드백",
+  },
+  {
+    title: "마무리",
+    subtitle: "AI가 관리하는 버거 프랜차이즈",
+    content:
+      "운영은 AI에게, 성공은 당신에게. SLAMBURGER와 함께하세요!\\n홈페이지: www.slamburger.co.kr | 문의: franchise@slamburger.co.kr",
+  },
+];
+
+export default function SlamburgerAutoPresentation() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % slides.length);
+    }, 7000); // 7초 간격 자동 슬라이드
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="w-full h-screen bg-black text-white flex flex-col items-center justify-center overflow-hidden relative">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          className="absolute w-full h-full flex flex-col items-center justify-center text-center px-8"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.02 }}
+          transition={{ duration: 0.8 }}
+        >
+          <h1 className="text-4xl md:text-6xl font-extrabold text-red-500 mb-4 drop-shadow-lg">
+            {slides[index].title}
+          </h1>
+          {slides[index].subtitle && (
+            <h2 className="text-xl md:text-2xl text-zinc-300 mb-6">
+              {slides[index].subtitle}
+            </h2>
+          )}
+          <p className="max-w-3xl text-lg md:text-xl text-zinc-200 leading-relaxed whitespace-pre-line">
+            {slides[index].content}
+          </p>
+          {slides[index].link && (
+            <a
+              href={slides[index].link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-block bg-red-600 text-white px-5 py-3 rounded-xl hover:bg-red-700 transition-all"
+            >
+              레스토지니 기능 자세히 보기
+            </a>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* 하단 네비게이션 */}
+      <div className="absolute bottom-6 flex space-x-3">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIndex(i)}
+            className={\`w-3 h-3 rounded-full transition-all \${i === index ? "bg-red-500 scale-125" : "bg-zinc-600"}\`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+`
+}
