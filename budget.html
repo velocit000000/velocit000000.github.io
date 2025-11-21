@@ -26,6 +26,11 @@
 
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #fdf4ff; }
+        ::-webkit-scrollbar-thumb { background: #f9a8d4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f472b6; }
     </style>
 </head>
 <body>
@@ -38,27 +43,10 @@
             PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
         } from 'recharts';
         import { 
-            TrendingUp, TrendingDown, Wallet, Search, Loader2, Calendar, Receipt, Filter, ChevronDown, Info
+            TrendingUp, TrendingDown, Wallet, Search, Loader2, Calendar, Receipt, Filter, ChevronDown, Info, RefreshCw
         } from 'lucide-react';
 
-        // --- Mock Data ---
-        const MOCK_TRANSACTIONS = [
-            { id: 1, date: '2024-01-16', category: '공과금', desc: '전기요금', memo: '한전 요금', amount: -45000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 2, date: '2024-01-25', category: '공과금', desc: '가스요금', memo: '도시가스', amount: -38000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 3, date: '2024-02-16', category: '공과금', desc: '수도요금', memo: '상하수도', amount: -25000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 4, date: '2024-02-25', category: '공과금', desc: '난방비', memo: '도시가스', amount: -85000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 5, date: '2024-03-05', category: '월급', desc: '정규직 월급', memo: '3월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
-            { id: 6, date: '2024-03-19', category: '공과금', desc: '전기요금', memo: '한국전력', amount: -52000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 7, date: '2024-03-28', category: '공과금', desc: '가스요금', memo: 'LP가스', amount: -42000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 8, date: '2024-04-08', category: '쇼핑', desc: '가을 옷 구매', memo: '백화점', amount: -150000, type: 'expense', paymentMethod: '체크카드' },
-            { id: 9, date: '2024-04-10', category: '식비', desc: '마트 장보기', memo: '이마트', amount: -85000, type: 'expense', paymentMethod: '신용카드' },
-            { id: 10, date: '2024-04-19', category: '공과금', desc: '수도요금', memo: '수도공사', amount: -28000, type: 'expense', paymentMethod: '자동이체' },
-            { id: 11, date: '2024-04-25', category: '저축', desc: '적금 이체', memo: '청약저축', amount: -1000000, type: 'expense', paymentMethod: '은행이체' },
-            { id: 12, date: '2024-04-26', category: '식비', desc: '치킨 배달', memo: '야식', amount: -25000, type: 'expense', paymentMethod: '신용카드' },
-            { id: 13, date: '2024-05-01', category: '월급', desc: '정규직 월급', memo: '5월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
-        ];
-
-        // Theme
+        // --- Theme ---
         const THEME = {
             bgMain: '#fdf4ff', 
             bgCard: '#fffbeb', 
@@ -68,25 +56,143 @@
             chart: ['#ec4899', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e'],
         };
 
+        // --- Helper: CSV Parser ---
+        const parseCSV = (text) => {
+            const rows = text.split('\n').filter(row => row.trim() !== '');
+            // Skip header row
+            
+            return rows.slice(1).map((row, idx) => {
+                // Handle potential commas inside quotes (simplified regex)
+                const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(',');
+                const cleanValues = values.map(v => v ? v.replace(/^"|"$/g, '').trim() : '');
+                
+                // Mapping columns (Index based on standard export)
+                // Adjust these indices if your CSV structure is different
+                const date = cleanValues[0] || '';
+                const desc = cleanValues[1] || '';
+                const category = cleanValues[2] || '기타';
+                const incomeStr = cleanValues[3] || '0';
+                const expenseStr = cleanValues[4] || '0';
+                // skip balance column in csv usually, calc dynamically
+                const paymentMethod = cleanValues[6] || '기타'; 
+                const memo = cleanValues[7] || '';
+
+                // Safe Number Conversion
+                const income = parseInt(incomeStr.replace(/[^0-9]/g, '') || '0', 10);
+                const expense = parseInt(expenseStr.replace(/[^0-9]/g, '') || '0', 10);
+                
+                let amount = 0;
+                let type = 'expense';
+                
+                if (income > 0) {
+                    amount = income;
+                    type = 'income';
+                } else if (expense > 0) {
+                    amount = -expense;
+                    type = 'expense';
+                } else {
+                    // Try to detect from a single amount column if exists
+                    const singleAmt = parseInt(cleanValues[3] || '0', 10); 
+                    amount = singleAmt;
+                    type = singleAmt >= 0 ? 'income' : 'expense';
+                }
+
+                return {
+                    id: idx,
+                    date: date.replace(/\./g, '-'), // Normalize date format
+                    desc,
+                    category,
+                    amount,
+                    type,
+                    paymentMethod,
+                    memo
+                };
+            });
+        };
+
+        // --- Mock Data (Fallback) ---
+        const MOCK_TRANSACTIONS = [
+            { id: 1, date: '2024-01-16', category: '공과금', desc: '전기요금', memo: '한전 요금', amount: -45000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 2, date: '2024-01-25', category: '공과금', desc: '가스요금', memo: '도시가스', amount: -38000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 3, date: '2024-02-16', category: '공과금', desc: '수도요금', memo: '상하수도', amount: -25000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 4, date: '2024-03-05', category: '월급', desc: '정규직 월급', memo: '3월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
+            { id: 5, date: '2024-04-08', category: '쇼핑', desc: '가을 옷 구매', memo: '백화점', amount: -150000, type: 'expense', paymentMethod: '체크카드' },
+            { id: 6, date: '2024-04-10', category: '식비', desc: '마트 장보기', memo: '이마트', amount: -85000, type: 'expense', paymentMethod: '신용카드' },
+            { id: 7, date: '2024-05-01', category: '월급', desc: '정규직 월급', memo: '5월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
+        ];
+
         function App() {
             const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/1wKC7BuHcc1jmzbN93qB7TE9G1BeWaVyFXzS5Lod7DVU/edit?gid=0#gid=0');
             const [isAnalyzing, setIsAnalyzing] = useState(false);
             const [data, setData] = useState(MOCK_TRANSACTIONS);
+            const [errorMsg, setErrorMsg] = useState(null);
 
+            // Default date range: This year
+            const currentYear = new Date().getFullYear();
             const [filters, setFilters] = useState({
                 keyword: '',
                 type: 'all',
                 category: 'all',
-                paymentMethod: 'all'
+                paymentMethod: 'all',
+                startDate: `${currentYear}-01-01`,
+                endDate: `${currentYear}-12-31`
             });
 
-            const handleAnalyze = () => {
-                if (!sheetUrl) return;
+            // --- Fetch Logic ---
+            const fetchSheetData = async () => {
                 setIsAnalyzing(true);
-                setTimeout(() => {
-                    setData(MOCK_TRANSACTIONS);
+                setErrorMsg(null);
+                
+                try {
+                    // Extract Sheet ID
+                    const match = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                    if (!match) {
+                        throw new Error("올바른 구글 스프레드시트 URL이 아닙니다.");
+                    }
+                    const sheetId = match[1];
+                    
+                    // 1. 구글 시트 CSV 내보내기 URL
+                    const targetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+                    
+                    // 2. CORS Proxy를 사용하여 우회 요청 (Fix 'Failed to fetch')
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) {
+                        throw new Error("데이터를 불러오지 못했습니다. 시트가 '링크가 있는 모든 사용자에게 공개'되어 있는지 확인해주세요.");
+                    }
+                    
+                    const text = await response.text();
+
+                    // 로그인 페이지 등이 반환되었는지 확인
+                    if (text.includes("<!DOCTYPE html>") || text.includes("google.com/accounts")) {
+                         throw new Error("시트에 접근할 수 없습니다. '링크가 있는 모든 사용자에게 공개'로 설정되어 있는지 확인해주세요.");
+                    }
+                    
+                    const parsedData = parseCSV(text);
+                    
+                    if (parsedData.length === 0) {
+                        throw new Error("데이터가 비어있거나 형식을 인식할 수 없습니다.");
+                    }
+
+                    // If successful, use real data
+                    console.log("Fetched Data:", parsedData);
+                    setData(parsedData);
+
+                } catch (err) {
+                    console.error("Fetch Error:", err);
+                    // Fallback to Mock if user is just testing the UI without a valid sheet
+                    if (sheetUrl.includes('1wKC7BuHcc1jmzbN93qB7TE9G1BeWaVyFXzS5Lod7DVU')) {
+                         // Just reset mock for the demo url
+                         setData(MOCK_TRANSACTIONS);
+                    } else {
+                        setErrorMsg(err.message);
+                        alert(`오류: ${err.message}\n(데모를 위해 임시 데이터를 표시합니다)`);
+                        setData(MOCK_TRANSACTIONS);
+                    }
+                } finally {
                     setIsAnalyzing(false);
-                }, 1500); 
+                }
             };
 
             // --- Data Processing ---
@@ -114,15 +220,30 @@
                 return { categories, methods };
             }, [data]);
 
+            // --- Filtering Logic with Date Range ---
             const filteredData = useMemo(() => {
                 return dataWithBalance.filter(item => {
+                    // Date Filter
+                    const itemDate = new Date(item.date);
+                    const start = filters.startDate ? new Date(filters.startDate) : null;
+                    const end = filters.endDate ? new Date(filters.endDate) : null;
+                    
+                    // Reset time part for accurate date comparison
+                    if (start) start.setHours(0,0,0,0);
+                    if (end) end.setHours(23,59,59,999);
+                    if (itemDate) itemDate.setHours(12,0,0,0);
+
+                    const matchDate = (!start || itemDate >= start) && (!end || itemDate <= end);
+
                     const matchKeyword = 
                         item.desc.includes(filters.keyword) || 
                         item.category.includes(filters.keyword) ||
                         item.memo.includes(filters.keyword);
+                    
                     const matchCategory = filters.category === 'all' || item.category === filters.category;
                     const matchMethod = filters.paymentMethod === 'all' || item.paymentMethod === filters.paymentMethod;
-                    return matchKeyword && matchCategory && matchMethod;
+                    
+                    return matchDate && matchKeyword && matchCategory && matchMethod;
                 });
             }, [dataWithBalance, filters]);
 
@@ -157,19 +278,19 @@
             }, [filteredData]);
 
             const categoryData = useMemo(() => {
-                if (!data) return [];
-                const expenses = data.filter(t => t.type === 'expense');
+                if (!filteredData) return [];
+                const expenses = filteredData.filter(t => t.type === 'expense');
                 const catMap = expenses.reduce((acc, cur) => {
                     const amount = Math.abs(cur.amount);
                     acc[cur.category] = (acc[cur.category] || 0) + amount;
                     return acc;
                 }, {});
                 return Object.entries(catMap).map(([name, value]) => ({ name, value }));
-            }, [data]);
+            }, [filteredData]);
 
             const paymentData = useMemo(() => {
-                if (!data) return [];
-                const expenses = data.filter(t => t.type === 'expense');
+                if (!filteredData) return [];
+                const expenses = filteredData.filter(t => t.type === 'expense');
                 const payMap = expenses.reduce((acc, cur) => {
                     const amount = Math.abs(cur.amount);
                     const method = cur.paymentMethod || '기타';
@@ -179,26 +300,36 @@
                 return Object.entries(payMap)
                     .map(([name, value]) => ({ name, 금액: value }))
                     .sort((a, b) => b.금액 - a.금액);
-            }, [data]);
+            }, [filteredData]);
 
-            const trendData = useMemo(() => [
-                { name: '2024.01', 수입: 3500000, 지출: 1800000 },
-                { name: '2024.02', 수입: 3500000, 지출: 1750000 },
-                { name: '2024.03', 수입: 3500000, 지출: 2100000 },
-                { name: '2024.04', 수입: 3500000, 지출: 1200000 },
-                { name: '2024.05', 수입: 0, 지출: 400000 },
-            ], []);
+            // Generate Trend Data from Filtered Data (Dynamic)
+            const trendData = useMemo(() => {
+                if (!filteredData) return [];
+                
+                // Group by Month
+                const monthMap = {};
+                filteredData.forEach(item => {
+                    const d = new Date(item.date);
+                    if (isNaN(d.getTime())) return; // skip invalid dates
+                    const key = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+                    if (!monthMap[key]) monthMap[key] = { name: key, 수입: 0, 지출: 0 };
+                    
+                    if (item.type === 'income') monthMap[key].수입 += item.amount;
+                    else monthMap[key].지출 += Math.abs(item.amount);
+                });
 
-            const dateRange = useMemo(() => {
-                if (!data || data.length === 0) return '-';
-                const dates = data.map(d => new Date(d.date).getTime());
-                const min = new Date(Math.min(...dates));
-                const max = new Date(Math.max(...dates));
-                return `${min.getFullYear()}.${min.getMonth()+1}.${min.getDate()} ~ ${max.getFullYear()}.${max.getMonth()+1}.${max.getDate()}`;
-            }, [data]);
+                return Object.values(monthMap).sort((a, b) => a.name.localeCompare(b.name));
+            }, [filteredData]);
 
             const resetFilters = () => {
-                setFilters({ keyword: '', type: 'all', category: 'all', paymentMethod: 'all' });
+                setFilters({ 
+                    keyword: '', 
+                    type: 'all', 
+                    category: 'all', 
+                    paymentMethod: 'all',
+                    startDate: `${currentYear}-01-01`,
+                    endDate: `${currentYear}-12-31`
+                });
             };
 
             return (
@@ -217,8 +348,10 @@
                         {/* Input Section */}
                         <div className="mb-8 rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
                             <label className="mb-3 block text-sm font-bold text-slate-700">
-                                가계부 대시보드
-                                <span className="block text-xs font-normal text-slate-500 mt-1">Google Sheets 스프레드시트 URL을 입력하여 가계부 데이터를 분석하세요</span>
+                                가계부 데이터 연동
+                                <span className="block text-xs font-normal text-slate-500 mt-1">
+                                    "링크가 있는 모든 사용자에게 공개"된 구글 시트 URL을 입력하세요.
+                                </span>
                             </label>
                             <div className="flex flex-col gap-3 sm:flex-row">
                                 <input 
@@ -229,13 +362,15 @@
                                     className="flex-1 rounded-lg border-2 border-pink-200 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none"
                                 />
                                 <button 
-                                    onClick={handleAnalyze}
+                                    onClick={fetchSheetData}
                                     disabled={isAnalyzing}
-                                    className="rounded-lg bg-pink-500 px-6 py-3 font-bold text-white transition-transform hover:scale-105 hover:bg-pink-600 disabled:opacity-50"
+                                    className="flex items-center gap-2 rounded-lg bg-pink-500 px-6 py-3 font-bold text-white transition-transform hover:scale-105 hover:bg-pink-600 disabled:opacity-50"
                                 >
-                                    {isAnalyzing ? '분석 중...' : '가계부 분석하기'}
+                                    {isAnalyzing ? <Loader2 className="animate-spin" size={20}/> : <RefreshCw size={20}/>}
+                                    {isAnalyzing ? '분석 중...' : '데이터 불러오기'}
                                 </button>
                             </div>
+                            {errorMsg && <p className="mt-2 text-xs text-red-500 font-bold">{errorMsg}</p>}
                         </div>
 
                         {data && overallSummary ? (
@@ -243,36 +378,51 @@
                                 
                                 {/* Top Stats */}
                                 <div className="grid gap-6 sm:grid-cols-3">
-                                    <SummaryCard title="총 수입" amount={overallSummary.income} icon={<TrendingUp size={20} />} colorClass="text-emerald-600" iconBg="bg-emerald-100" />
-                                    <SummaryCard title="총 지출" amount={overallSummary.expense} icon={<TrendingDown size={20} />} colorClass="text-rose-600" iconBg="bg-rose-100" />
-                                    <SummaryCard title="순수입" amount={overallSummary.balance} icon={<Wallet size={20} />} colorClass="text-blue-600" iconBg="bg-blue-100" />
+                                    <SummaryCard title="총 수입 (전체)" amount={overallSummary.income} icon={<TrendingUp size={20} />} colorClass="text-emerald-600" iconBg="bg-emerald-100" />
+                                    <SummaryCard title="총 지출 (전체)" amount={overallSummary.expense} icon={<TrendingDown size={20} />} colorClass="text-rose-600" iconBg="bg-rose-100" />
+                                    <SummaryCard title="순수입 (전체)" amount={overallSummary.balance} icon={<Wallet size={20} />} colorClass="text-blue-600" iconBg="bg-blue-100" />
                                 </div>
 
-                                {/* Count & Period */}
+                                {/* Count & Period Settings */}
                                 <div className="grid gap-6 sm:grid-cols-2">
+                                    {/* Transaction Count */}
                                     <div className="relative overflow-hidden rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-sm font-medium text-slate-500">거래 건수</p>
+                                                <p className="text-sm font-medium text-slate-500">전체 거래 건수</p>
                                                 <h3 className="mt-2 text-3xl font-bold text-slate-800">{data.length}건</h3>
                                             </div>
                                             <div className="rounded-full bg-slate-100 p-2 text-slate-500"><Receipt size={20}/></div>
                                         </div>
                                     </div>
+
+                                    {/* Date Range Filter (Modified) */}
                                     <div className="relative overflow-hidden rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="text-sm font-medium text-slate-500">기간</p>
-                                                <h3 className="mt-2 text-xl font-bold text-slate-800">{dateRange}</h3>
-                                            </div>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <p className="text-sm font-medium text-slate-500">기간 설정 (필터)</p>
                                             <div className="rounded-full bg-slate-100 p-2 text-slate-500"><Calendar size={20}/></div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="date" 
+                                                value={filters.startDate}
+                                                onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+                                                className="w-full rounded border border-pink-200 px-2 py-1 text-sm focus:border-pink-500 outline-none"
+                                            />
+                                            <span className="text-slate-400">~</span>
+                                            <input 
+                                                type="date" 
+                                                value={filters.endDate}
+                                                onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+                                                className="w-full rounded border border-pink-200 px-2 py-1 text-sm focus:border-pink-500 outline-none"
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Charts */}
                                 <div className="grid gap-6 lg:grid-cols-2">
-                                    <ChartCard title="분류별 지출" subtitle="상위 지출 분류">
+                                    <ChartCard title="분류별 지출" subtitle="선택 기간 상위 지출">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value">
@@ -285,7 +435,7 @@
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </ChartCard>
-                                    <ChartCard title="결제수단별 지출" subtitle="결제 방법별 지출 금액">
+                                    <ChartCard title="결제수단별 지출" subtitle="선택 기간 결제 방법">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={paymentData} barSize={40}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -302,7 +452,7 @@
                                 <div className="rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
                                     <div className="mb-6">
                                         <h3 className="text-lg font-bold text-slate-800">월별 수입/지출 추이</h3>
-                                        <p className="text-xs text-slate-500">월별 수입과 지출의 변화 추이</p>
+                                        <p className="text-xs text-slate-500">선택 기간 내 변화</p>
                                     </div>
                                     <div className="h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
@@ -327,7 +477,7 @@
                                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
                                             <div>
                                                 <h3 className="text-lg font-bold text-slate-800">거래 내역</h3>
-                                                <p className="text-xs text-slate-500">총 {filteredData.length}개의 거래 (전체 {data.length}개)</p>
+                                                <p className="text-xs text-slate-500">선택 기간 {filteredData.length}개의 거래 (전체 {data.length}개)</p>
                                             </div>
                                             <button onClick={resetFilters} className="text-xs font-medium text-slate-400 underline hover:text-pink-500 self-end lg:self-auto">
                                                 필터 초기화
@@ -433,7 +583,7 @@
                                     {detailedStats && (
                                         <div className="p-6">
                                             <h4 className="mb-4 text-base font-bold text-slate-700">
-                                                필터링된 데이터 통계
+                                                필터링된 데이터 통계 (선택 기간)
                                             </h4>
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
