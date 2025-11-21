@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가계부 대시보드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & Libraries (Import Map) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom": "https://esm.sh/react-dom@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "recharts": "https://esm.sh/recharts@2.12.0?external=react,react-dom",
+            "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react,react-dom"
+        }
+    }
+    </script>
+    
+    <!-- Babel (JSX compiling in browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useMemo, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
+        } from 'recharts';
+        import { 
+            TrendingUp, TrendingDown, Wallet, Search, Loader2, Calendar, Receipt, Filter, ChevronDown, Info
+        } from 'lucide-react';
+
+        // --- Mock Data ---
+        const MOCK_TRANSACTIONS = [
+            { id: 1, date: '2024-01-16', category: '공과금', desc: '전기요금', memo: '한전 요금', amount: -45000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 2, date: '2024-01-25', category: '공과금', desc: '가스요금', memo: '도시가스', amount: -38000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 3, date: '2024-02-16', category: '공과금', desc: '수도요금', memo: '상하수도', amount: -25000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 4, date: '2024-02-25', category: '공과금', desc: '난방비', memo: '도시가스', amount: -85000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 5, date: '2024-03-05', category: '월급', desc: '정규직 월급', memo: '3월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
+            { id: 6, date: '2024-03-19', category: '공과금', desc: '전기요금', memo: '한국전력', amount: -52000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 7, date: '2024-03-28', category: '공과금', desc: '가스요금', memo: 'LP가스', amount: -42000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 8, date: '2024-04-08', category: '쇼핑', desc: '가을 옷 구매', memo: '백화점', amount: -150000, type: 'expense', paymentMethod: '체크카드' },
+            { id: 9, date: '2024-04-10', category: '식비', desc: '마트 장보기', memo: '이마트', amount: -85000, type: 'expense', paymentMethod: '신용카드' },
+            { id: 10, date: '2024-04-19', category: '공과금', desc: '수도요금', memo: '수도공사', amount: -28000, type: 'expense', paymentMethod: '자동이체' },
+            { id: 11, date: '2024-04-25', category: '저축', desc: '적금 이체', memo: '청약저축', amount: -1000000, type: 'expense', paymentMethod: '은행이체' },
+            { id: 12, date: '2024-04-26', category: '식비', desc: '치킨 배달', memo: '야식', amount: -25000, type: 'expense', paymentMethod: '신용카드' },
+            { id: 13, date: '2024-05-01', category: '월급', desc: '정규직 월급', memo: '5월 급여', amount: 3500000, type: 'income', paymentMethod: '은행이체' },
+        ];
+
+        // Theme
+        const THEME = {
+            bgMain: '#fdf4ff', 
+            bgCard: '#fffbeb', 
+            border: '#f472b6', 
+            primary: '#d946ef', 
+            textMain: '#4a044e', 
+            chart: ['#ec4899', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e'],
+        };
+
+        function App() {
+            const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/1wKC7BuHcc1jmzbN93qB7TE9G1BeWaVyFXzS5Lod7DVU/edit?gid=0#gid=0');
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+            const [data, setData] = useState(MOCK_TRANSACTIONS);
+
+            const [filters, setFilters] = useState({
+                keyword: '',
+                type: 'all',
+                category: 'all',
+                paymentMethod: 'all'
+            });
+
+            const handleAnalyze = () => {
+                if (!sheetUrl) return;
+                setIsAnalyzing(true);
+                setTimeout(() => {
+                    setData(MOCK_TRANSACTIONS);
+                    setIsAnalyzing(false);
+                }, 1500); 
+            };
+
+            // --- Data Processing ---
+            const dataWithBalance = useMemo(() => {
+                if (!data) return [];
+                const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                let runningBalance = 0;
+                return sorted.map(item => {
+                    runningBalance += item.amount;
+                    return { ...item, balance: runningBalance };
+                });
+            }, [data]);
+            
+            const overallSummary = useMemo(() => {
+                if (!data) return null;
+                const income = data.filter(t => t.type === 'income').reduce((acc, cur) => acc + cur.amount, 0);
+                const expense = data.filter(t => t.type === 'expense').reduce((acc, cur) => acc + Math.abs(cur.amount), 0);
+                return { income, expense, balance: income - expense };
+            }, [data]);
+
+            const filterOptions = useMemo(() => {
+                if (!data) return { categories: [], methods: [] };
+                const categories = [...new Set(data.map(item => item.category))];
+                const methods = [...new Set(data.map(item => item.paymentMethod))];
+                return { categories, methods };
+            }, [data]);
+
+            const filteredData = useMemo(() => {
+                return dataWithBalance.filter(item => {
+                    const matchKeyword = 
+                        item.desc.includes(filters.keyword) || 
+                        item.category.includes(filters.keyword) ||
+                        item.memo.includes(filters.keyword);
+                    const matchCategory = filters.category === 'all' || item.category === filters.category;
+                    const matchMethod = filters.paymentMethod === 'all' || item.paymentMethod === filters.paymentMethod;
+                    return matchKeyword && matchCategory && matchMethod;
+                });
+            }, [dataWithBalance, filters]);
+
+            const detailedStats = useMemo(() => {
+                if (!filteredData) return null;
+                
+                const income = filteredData.filter(t => t.type === 'income').reduce((acc, cur) => acc + cur.amount, 0);
+                const expense = filteredData.filter(t => t.type === 'expense').reduce((acc, cur) => acc + Math.abs(cur.amount), 0);
+                const balance = income - expense;
+
+                const catMap = filteredData.filter(t => t.type === 'expense').reduce((acc, cur) => {
+                    acc[cur.category] = (acc[cur.category] || 0) + Math.abs(cur.amount);
+                    return acc;
+                }, {});
+                
+                const topCategories = Object.entries(catMap)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5);
+
+                const payMap = filteredData.filter(t => t.type === 'expense').reduce((acc, cur) => {
+                    acc[cur.paymentMethod] = (acc[cur.paymentMethod] || 0) + Math.abs(cur.amount);
+                    return acc;
+                }, {});
+
+                const topMethods = Object.entries(payMap)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5);
+
+                return { income, expense, balance, topCategories, topMethods };
+            }, [filteredData]);
+
+            const categoryData = useMemo(() => {
+                if (!data) return [];
+                const expenses = data.filter(t => t.type === 'expense');
+                const catMap = expenses.reduce((acc, cur) => {
+                    const amount = Math.abs(cur.amount);
+                    acc[cur.category] = (acc[cur.category] || 0) + amount;
+                    return acc;
+                }, {});
+                return Object.entries(catMap).map(([name, value]) => ({ name, value }));
+            }, [data]);
+
+            const paymentData = useMemo(() => {
+                if (!data) return [];
+                const expenses = data.filter(t => t.type === 'expense');
+                const payMap = expenses.reduce((acc, cur) => {
+                    const amount = Math.abs(cur.amount);
+                    const method = cur.paymentMethod || '기타';
+                    acc[method] = (acc[method] || 0) + amount;
+                    return acc;
+                }, {});
+                return Object.entries(payMap)
+                    .map(([name, value]) => ({ name, 금액: value }))
+                    .sort((a, b) => b.금액 - a.금액);
+            }, [data]);
+
+            const trendData = useMemo(() => [
+                { name: '2024.01', 수입: 3500000, 지출: 1800000 },
+                { name: '2024.02', 수입: 3500000, 지출: 1750000 },
+                { name: '2024.03', 수입: 3500000, 지출: 2100000 },
+                { name: '2024.04', 수입: 3500000, 지출: 1200000 },
+                { name: '2024.05', 수입: 0, 지출: 400000 },
+            ], []);
+
+            const dateRange = useMemo(() => {
+                if (!data || data.length === 0) return '-';
+                const dates = data.map(d => new Date(d.date).getTime());
+                const min = new Date(Math.min(...dates));
+                const max = new Date(Math.max(...dates));
+                return `${min.getFullYear()}.${min.getMonth()+1}.${min.getDate()} ~ ${max.getFullYear()}.${max.getMonth()+1}.${max.getDate()}`;
+            }, [data]);
+
+            const resetFilters = () => {
+                setFilters({ keyword: '', type: 'all', category: 'all', paymentMethod: 'all' });
+            };
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-pink-200" style={{ backgroundColor: THEME.bgMain, color: THEME.textMain }}>
+                    
+                    {/* Header */}
+                    <header className="py-10 text-center">
+                        <h1 className="text-4xl font-black tracking-tight text-purple-600 sm:text-5xl mb-2">
+                            가계부 대시보드
+                        </h1>
+                        <p className="text-slate-500">Google Sheets로 관리하는 가계부를 시각적으로 분석하세요</p>
+                    </header>
+
+                    <main className="container mx-auto max-w-6xl px-4 pb-20">
+                        
+                        {/* Input Section */}
+                        <div className="mb-8 rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                            <label className="mb-3 block text-sm font-bold text-slate-700">
+                                가계부 대시보드
+                                <span className="block text-xs font-normal text-slate-500 mt-1">Google Sheets 스프레드시트 URL을 입력하여 가계부 데이터를 분석하세요</span>
+                            </label>
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <input 
+                                    type="text" 
+                                    value={sheetUrl}
+                                    onChange={(e) => setSheetUrl(e.target.value)}
+                                    placeholder="https://docs.google.com/spreadsheets/..."
+                                    className="flex-1 rounded-lg border-2 border-pink-200 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none"
+                                />
+                                <button 
+                                    onClick={handleAnalyze}
+                                    disabled={isAnalyzing}
+                                    className="rounded-lg bg-pink-500 px-6 py-3 font-bold text-white transition-transform hover:scale-105 hover:bg-pink-600 disabled:opacity-50"
+                                >
+                                    {isAnalyzing ? '분석 중...' : '가계부 분석하기'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {data && overallSummary ? (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                
+                                {/* Top Stats */}
+                                <div className="grid gap-6 sm:grid-cols-3">
+                                    <SummaryCard title="총 수입" amount={overallSummary.income} icon={<TrendingUp size={20} />} colorClass="text-emerald-600" iconBg="bg-emerald-100" />
+                                    <SummaryCard title="총 지출" amount={overallSummary.expense} icon={<TrendingDown size={20} />} colorClass="text-rose-600" iconBg="bg-rose-100" />
+                                    <SummaryCard title="순수입" amount={overallSummary.balance} icon={<Wallet size={20} />} colorClass="text-blue-600" iconBg="bg-blue-100" />
+                                </div>
+
+                                {/* Count & Period */}
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="relative overflow-hidden rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-500">거래 건수</p>
+                                                <h3 className="mt-2 text-3xl font-bold text-slate-800">{data.length}건</h3>
+                                            </div>
+                                            <div className="rounded-full bg-slate-100 p-2 text-slate-500"><Receipt size={20}/></div>
+                                        </div>
+                                    </div>
+                                    <div className="relative overflow-hidden rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-500">기간</p>
+                                                <h3 className="mt-2 text-xl font-bold text-slate-800">{dateRange}</h3>
+                                            </div>
+                                            <div className="rounded-full bg-slate-100 p-2 text-slate-500"><Calendar size={20}/></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Charts */}
+                                <div className="grid gap-6 lg:grid-cols-2">
+                                    <ChartCard title="분류별 지출" subtitle="상위 지출 분류">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value">
+                                                    {categoryData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={THEME.chart[index % THEME.chart.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <RechartsTooltip formatter={(value) => `${value.toLocaleString()}원`} />
+                                                <Legend iconType="circle" />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </ChartCard>
+                                    <ChartCard title="결제수단별 지출" subtitle="결제 방법별 지출 금액">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={paymentData} barSize={40}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12}} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} tickFormatter={(v) => `${v/10000}만`} />
+                                                <RechartsTooltip cursor={{fill: 'transparent'}} formatter={(value) => `${value.toLocaleString()}원`} />
+                                                <Bar dataKey="금액" fill="#f472b6" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </ChartCard>
+                                </div>
+
+                                {/* Line Chart */}
+                                <div className="rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-bold text-slate-800">월별 수입/지출 추이</h3>
+                                        <p className="text-xs text-slate-500">월별 수입과 지출의 변화 추이</p>
+                                    </div>
+                                    <div className="h-[300px] w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12}} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} tickFormatter={(v) => `${v/10000}만`} />
+                                                <RechartsTooltip formatter={(value) => `${value.toLocaleString()}원`} />
+                                                <Legend />
+                                                <Line type="monotone" dataKey="수입" stroke="#34d399" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                                                <Line type="monotone" dataKey="지출" stroke="#f43f5e" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Transaction List & Advanced Footer Stats */}
+                                <div className="rounded-2xl border-2 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                                    
+                                    {/* Header & Filters */}
+                                    <div className="p-6 pb-2">
+                                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-slate-800">거래 내역</h3>
+                                                <p className="text-xs text-slate-500">총 {filteredData.length}개의 거래 (전체 {data.length}개)</p>
+                                            </div>
+                                            <button onClick={resetFilters} className="text-xs font-medium text-slate-400 underline hover:text-pink-500 self-end lg:self-auto">
+                                                필터 초기화
+                                            </button>
+                                        </div>
+
+                                        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                                            <div className="relative flex-1">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="항목, 메모, 날짜로 검색..." 
+                                                    value={filters.keyword}
+                                                    onChange={(e) => setFilters({...filters, keyword: e.target.value})}
+                                                    className="w-full rounded-lg border-2 border-pink-300 bg-white py-2.5 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none placeholder:text-slate-400"
+                                                />
+                                            </div>
+                                            
+                                            <div className="relative min-w-[140px]">
+                                                <select 
+                                                    value={filters.category}
+                                                    onChange={(e) => setFilters({...filters, category: e.target.value})}
+                                                    className="w-full appearance-none rounded-lg border-2 border-pink-300 bg-white py-2.5 pl-3 pr-8 text-sm focus:border-pink-500 focus:outline-none text-slate-600"
+                                                >
+                                                    <option value="all">전체 분류</option>
+                                                    {filterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                                <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16}/>
+                                            </div>
+
+                                            <div className="relative min-w-[140px]">
+                                                <select 
+                                                    value={filters.paymentMethod}
+                                                    onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
+                                                    className="w-full appearance-none rounded-lg border-2 border-pink-300 bg-white py-2.5 pl-3 pr-8 text-sm focus:border-pink-500 focus:outline-none text-slate-600"
+                                                >
+                                                    <option value="all">전체 결제방법</option>
+                                                    {filterOptions.methods.map(m => <option key={m} value={m}>{m}</option>)}
+                                                </select>
+                                                <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16}/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Table */}
+                                    <div className="overflow-x-auto border-y-2 border-pink-200">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-pink-100/50 text-slate-600">
+                                                <tr>
+                                                    <th className="px-4 py-3 font-medium">날짜</th>
+                                                    <th className="px-4 py-3 font-medium">항목</th>
+                                                    <th className="px-4 py-3 font-medium">분류</th>
+                                                    <th className="px-4 py-3 font-medium text-right">수입</th>
+                                                    <th className="px-4 py-3 font-medium text-right">지출</th>
+                                                    <th className="px-4 py-3 font-medium text-right">잔액</th>
+                                                    <th className="px-4 py-3 font-medium text-center">결제방법</th>
+                                                    <th className="px-4 py-3 font-medium">메모</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-pink-100 bg-[#fffbeb]">
+                                                {filteredData.length > 0 ? (
+                                                    filteredData.map((item) => (
+                                                        <tr key={item.id} className="hover:bg-pink-50 transition-colors">
+                                                            <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{item.date}</td>
+                                                            <td className="px-4 py-3 font-medium text-slate-700">{item.desc}</td>
+                                                            <td className="px-4 py-3">
+                                                                <span className="inline-block rounded border border-pink-300 bg-white px-2 py-0.5 text-xs text-slate-600">
+                                                                    {item.category}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right text-emerald-600">
+                                                                {item.type === 'income' ? `₩${item.amount.toLocaleString()}` : '-'}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right text-rose-500 font-medium">
+                                                                {item.type === 'expense' ? `₩${Math.abs(item.amount).toLocaleString()}` : '-'}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right text-slate-500 text-xs">
+                                                                ₩{item.balance.toLocaleString()}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <span className={`inline-block rounded px-2 py-1 text-xs font-bold text-white
+                                                                    ${item.paymentMethod === '자동이체' ? 'bg-teal-400' : 
+                                                                    item.paymentMethod === '신용카드' ? 'bg-pink-400' : 
+                                                                    item.paymentMethod === '체크카드' ? 'bg-blue-400' : 'bg-indigo-400'}`}>
+                                                                    {item.paymentMethod}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-slate-500 text-xs">{item.memo}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                                                            조건에 맞는 거래 내역이 없습니다.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Footer Stats */}
+                                    {detailedStats && (
+                                        <div className="p-6">
+                                            <h4 className="mb-4 text-base font-bold text-slate-700">
+                                                필터링된 데이터 통계
+                                            </h4>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                <div className="rounded-xl border-2 border-pink-200 bg-[#fffbeb] p-4">
+                                                    <div className="text-xs font-bold text-emerald-600 mb-2 flex items-center gap-1"><TrendingUp size={12}/> 총 수입</div>
+                                                    <div className="text-xl font-extrabold text-emerald-600">
+                                                        {detailedStats.income === 0 ? '-' : `₩${detailedStats.income.toLocaleString()}`}
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-xl border-2 border-pink-300 bg-[#fffbeb] p-4 shadow-sm">
+                                                    <div className="text-xs font-bold text-rose-500 mb-2 flex items-center gap-1"><TrendingDown size={12}/> 총 지출</div>
+                                                    <div className="text-2xl font-extrabold text-rose-600">
+                                                        ₩{detailedStats.expense.toLocaleString()}
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-xl border-2 border-pink-200 bg-[#fffbeb] p-4">
+                                                    <div className="text-xs font-bold text-orange-500 mb-2 flex items-center gap-1"><Wallet size={12}/> 순수입</div>
+                                                    <div className={`text-xl font-extrabold ${detailedStats.balance < 0 ? 'text-orange-600' : 'text-blue-600'}`}>
+                                                        {detailedStats.balance < 0 ? '-' : ''}₩{Math.abs(detailedStats.balance).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="rounded-xl border-2 border-pink-300 bg-[#fffbeb] p-4">
+                                                    <h5 className="text-sm font-bold text-slate-700 mb-3">분류별 지출 TOP 5</h5>
+                                                    <div className="space-y-2">
+                                                        {detailedStats.topCategories.length > 0 ? detailedStats.topCategories.map((cat, idx) => (
+                                                            <div key={cat.name} className="flex items-center justify-between text-sm">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-bold text-slate-400 w-3">{idx + 1}.</span>
+                                                                    <span className="rounded border border-pink-300 bg-white px-1.5 py-0.5 text-xs text-slate-600">
+                                                                        {cat.name}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="font-bold text-slate-600">₩{cat.value.toLocaleString()}</span>
+                                                            </div>
+                                                        )) : <p className="text-xs text-slate-400">지출 내역이 없습니다.</p>}
+                                                    </div>
+                                                </div>
+
+                                                <div className="rounded-xl border-2 border-pink-300 bg-[#fffbeb] p-4">
+                                                    <h5 className="text-sm font-bold text-slate-700 mb-3">결제방법별 지출 TOP 5</h5>
+                                                    <div className="space-y-2">
+                                                        {detailedStats.topMethods.length > 0 ? detailedStats.topMethods.map((method, idx) => (
+                                                            <div key={method.name} className="flex items-center justify-between text-sm">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-bold text-slate-400 w-3">{idx + 1}.</span>
+                                                                    <span className={`rounded px-1.5 py-0.5 text-xs font-bold text-white
+                                                                        ${method.name === '자동이체' ? 'bg-teal-400' : 
+                                                                        method.name === '신용카드' ? 'bg-pink-400' : 
+                                                                        method.name === '체크카드' ? 'bg-blue-400' : 'bg-indigo-400'}`}>
+                                                                        {method.name}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="font-bold text-slate-600">₩{method.value.toLocaleString()}</span>
+                                                            </div>
+                                                        )) : <p className="text-xs text-slate-400">지출 내역이 없습니다.</p>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-pink-200 bg-white/50 text-center">
+                                <Loader2 className="h-10 w-10 animate-spin text-pink-300 mb-4" />
+                                <p className="text-slate-500">데이터를 준비 중입니다...</p>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        function SummaryCard({ title, amount, icon, colorClass, iconBg }) {
+            return (
+                <div className="rounded-2xl border-2 p-6 shadow-sm transition-all hover:-translate-y-1" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-sm font-bold text-slate-600">{title}</span>
+                        <div className={`rounded-lg p-2 ${iconBg} ${colorClass}`}>
+                            {icon}
+                        </div>
+                    </div>
+                    <h3 className={`text-2xl font-extrabold ${colorClass}`}>
+                        ₩{amount.toLocaleString()}
+                    </h3>
+                </div>
+            );
+        }
+
+        function ChartCard({ title, subtitle, children }) {
+            return (
+                <div className="rounded-2xl border-2 p-6 shadow-sm" style={{ backgroundColor: THEME.bgCard, borderColor: THEME.border }}>
+                    <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                        <p className="text-xs text-slate-500">{subtitle}</p>
+                    </div>
+                    <div className="h-[300px] w-full">
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
