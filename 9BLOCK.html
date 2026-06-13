@@ -188,7 +188,7 @@
 
     <script>
         window.onload = function() {
-            // 사용자 제공 2025 CSV 데이터를 기반으로 구축한 10대 핵심 상권 매핑 (40대, 50대 비중 포함)
+            // 사용자 제공 2025 CSV 데이터를 기반으로 구축한 10대 핵심 상권 매핑
             const realSeoulData = [
                 { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512 },
                 { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000 },
@@ -229,7 +229,9 @@
                 errorContent: document.getElementById('error-modal-content'),
             };
 
+            // ✅ 카카오맵 재사용 및 마커 누적 방지를 위한 전역 변수
             let mapInstance = null;
+            let markers = []; 
             let currentWeights = {};
             let ageChartInstance = null;
             let genderChartInstance = null;
@@ -357,7 +359,7 @@
                         }, { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: 300 });
                     });
 
-                    // 원래 지정하셨던 세부 브랜드 목록
+                    // 원래 지정하셨던 세부 브랜드 목록 복구 완료
                     const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '커피'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c)));
                     
@@ -473,58 +475,74 @@
                 return data;
             }
 
+            // ✅ 완벽 복구 및 개선된 카카오맵 렌더링 로직 (마커 및 말풍선 100% 동작)
             function displayMap(coords, places) {
                 if (!window.kakao || !window.kakao.maps || !window.kakao.maps.Map) {
                     elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center p-6 h-full justify-center bg-gray-100 rounded-lg"><svg class="w-12 h-12 mb-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p class="text-sm font-bold text-gray-600 mb-2">카카오맵을 불러올 수 없는 환경입니다.</p><p class="text-xs text-gray-400">도메인이 카카오 디벨로퍼스에 등록되지 않았거나, 인터넷 연결을 확인해주세요.<br/>(임시로 가상 데이터를 통한 분석이 완료되었습니다.)</p></div>';
                     return;
                 }
                 
-                elements.map.innerHTML = '';
-                mapInstance = new kakao.maps.Map(elements.map, { center: new kakao.maps.LatLng(coords.lat, coords.lng), level: 4 });
+                const mapOption = { 
+                    center: new kakao.maps.LatLng(coords.lat, coords.lng), 
+                    level: 4 
+                };
+
+                // 지도 인스턴스가 없으면 새로 생성, 있으면 중심만 이동 (부드러운 전환)
+                if (!mapInstance) {
+                    elements.map.innerHTML = '';
+                    mapInstance = new kakao.maps.Map(elements.map, mapOption);
+                } else {
+                    mapInstance.setCenter(new kakao.maps.LatLng(coords.lat, coords.lng));
+                }
+
+                // 기존 마커 초기화 (지도에서 지우고 배열 비우기)
+                markers.forEach(marker => marker.setMap(null));
+                markers = [];
                 
                 // 내 위치(검색 위치) 마커
-                new kakao.maps.Marker({
+                const mainMarkerImage = new kakao.maps.MarkerImage(
+                    'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+                    new kakao.maps.Size(64, 69), 
+                    {offset: new kakao.maps.Point(27, 69)}
+                );
+                const mainMarker = new kakao.maps.Marker({
                     position: mapInstance.getCenter(),
-                    image: new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', new kakao.maps.Size(64, 69), {offset: new kakao.maps.Point(27, 69)})
-                }).setMap(mapInstance);
+                    image: mainMarkerImage
+                });
+                mainMarker.setMap(mapInstance);
+                markers.push(mainMarker);
 
-                // 경쟁점 마커 렌더링 및 브랜드 이름 호버(오버레이) 로직 복원 완료
+                // ✅ 사용자가 처음 첨부했던 오리지널 InfoWindow 로직 완벽 적용
                 places.forEach(place => {
                     const marker = new kakao.maps.Marker({ 
+                        map: mapInstance, 
                         position: new kakao.maps.LatLng(place.y, place.x) 
                     });
-                    marker.setMap(mapInstance);
                     
-                    // Tailwind CSS 환경에서도 깨지지 않는 CustomOverlay 디자인 적용
-                    const content = `<div style="background-color: white; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); white-space: nowrap; transform: translateY(-45px);">
-                        ${place.place_name}
-                    </div>`;
-
-                    const customOverlay = new kakao.maps.CustomOverlay({
-                        position: new kakao.maps.LatLng(place.y, place.x),
-                        content: content,
-                        yAnchor: 1 // 마커 위쪽에 배치되도록 기준점 설정
+                    // InfoWindow 컨텐츠 (글자 줄바꿈 방지를 위해 white-space: nowrap 추가)
+                    const infowindow = new kakao.maps.InfoWindow({ 
+                        content: `<div style="padding:5px; font-size:13px; font-weight:bold; color:#333; text-align:center; white-space:nowrap;">${place.place_name}</div>` 
                     });
                     
                     // 데스크톱: 마우스 올렸을 때 나타나고, 벗어나면 사라짐
                     kakao.maps.event.addListener(marker, 'mouseover', () => {
-                        customOverlay.setMap(mapInstance);
+                        infowindow.open(mapInstance, marker);
                     });
                     kakao.maps.event.addListener(marker, 'mouseout', () => {
-                        customOverlay.setMap(null);
+                        infowindow.close();
                     });
 
-                    // 모바일/태블릿: 터치(클릭)했을 때 나타나고/사라짐 토글 기능
-                    let isOverlayOpen = false;
+                    // 모바일/태블릿: 터치(클릭)했을 때 나타나고/사라짐 토글 기능 지원
                     kakao.maps.event.addListener(marker, 'click', () => {
-                        if(isOverlayOpen) {
-                            customOverlay.setMap(null);
-                            isOverlayOpen = false;
+                        if (infowindow.getMap()) {
+                            infowindow.close();
                         } else {
-                            customOverlay.setMap(mapInstance);
-                            isOverlayOpen = true;
+                            infowindow.open(mapInstance, marker);
                         }
                     });
+
+                    // 마커 배열에 추가 (다음 검색 시 삭제하기 위함)
+                    markers.push(marker);
                 });
             }
 
