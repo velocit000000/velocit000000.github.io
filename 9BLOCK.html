@@ -184,18 +184,18 @@
 
     <script>
         window.onload = function() {
-            // ✅ 사용자 제공 2025 공공데이터 매핑 (유동인구, 경쟁사 수, 교통 접근성 실제값 하드코딩 강화)
+            // 사용자 제공 2025 공공데이터 매핑
             const realSeoulData = [
-                { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 410000, popScore: 98, comp: 45, subDist: 150, bus: 18 },
-                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 650000, popScore: 100, comp: 80, subDist: 50, bus: 25 },
-                { keyword: '홍대', name: '홍대입구역', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 480000, popScore: 97, comp: 60, subDist: 80, bus: 20 },
-                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 180000, popScore: 88, comp: 35, subDist: 400, bus: 12 },
-                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 450000, popScore: 96, comp: 55, subDist: 100, bus: 22 },
-                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 250000, popScore: 93, comp: 40, subDist: 250, bus: 15 },
-                { keyword: '까치산', name: '까치산역 4번 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 85000, popScore: 82, comp: 15, subDist: 120, bus: 10 },
-                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 62000, popScore: 78, comp: 12, subDist: 200, bus: 14 },
-                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 25000, popScore: 68, comp: 5, subDist: 800, bus: 6 },
-                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 58000, popScore: 75, comp: 8, subDist: 300, bus: 11 }
+                { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 350000, popScore: 92 },
+                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 550000, popScore: 98 },
+                { keyword: '홍대', name: '홍대입구역', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 380000, popScore: 96 },
+                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 120000, popScore: 85 },
+                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 320000, popScore: 95 },
+                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 180000, popScore: 90 },
+                { keyword: '까치산', name: '까치산역 4번 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 65000, popScore: 80 },
+                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 42000, popScore: 75 },
+                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 15000, popScore: 65 },
+                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 38000, popScore: 72 }
             ];
 
             const criteria = {
@@ -330,7 +330,7 @@
                 }
             }
             
-            // ✅ 카카오맵 API 연동 (실패 시에도 정확한 실데이터로 우회하는 스마트 Mock 로직 적용)
+            // ✅ 카카오맵 실제 API 호출 로직 (오리지널 키워드 복원 및 마커 개수 제한 해제)
             async function analyzeAPI(address) {
                 const isKakaoAvailable = window.kakao && window.kakao.maps && window.kakao.maps.services;
                 if (!isKakaoAvailable) return generateMockData(address);
@@ -346,7 +346,7 @@
                         });
                     });
 
-                    const searchNearby = (coords, keyword, radius = 500, useDistanceSort = false) => new Promise((res) => {
+                    const searchNearby = (coords, keyword, radius = 300, useDistanceSort = false) => new Promise((res) => {
                         let options = { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: radius };
                         if (useDistanceSort) options.sort = kakao.maps.services.SortBy.DISTANCE; 
 
@@ -356,32 +356,32 @@
                         }, options);
                     });
 
-                    // 경쟁사 필터링 정확도 상향
-                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '메가커피', '이디야'];
+                    // 1. 경쟁 환경 분석: 사용자가 초기에 작성했던 오리지널 키워드 리스트 완벽 복원 ('커피' 포함)
+                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '커피'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c, 300)));
                     const allPlaces = results.flatMap(r => r.places);
+                    
+                    // 중복 검색결과 제거
                     const uniquePlaces = Array.from(new Map(allPlaces.map(place => [place.id, place])).values());
 
+                    // 2. 접근성 분석: 지하철역, 버스정류장
                     const subwayResult = await searchNearby(coords, '지하철역', 1000, true);
                     const nearestSubwayDist = subwayResult.places.length > 0 ? parseInt(subwayResult.places[0].distance) : 2000;
-
                     const busStopResult = await searchNearby(coords, '버스정류장', 300);
-                    const busStopCount = busStopResult.count;
                     
                     return {
                         mainCoords: coords,
                         totalCompetitors: uniquePlaces.length,
-                        competitorPlaces: uniquePlaces.slice(0, 30), 
+                        competitorPlaces: uniquePlaces, // ✅ 마커를 30개로 자르던 .slice(0, 30) 코드 삭제! (모든 업체 표시됨)
                         nearestSubwayDist: nearestSubwayDist,
-                        busStopCount: busStopCount,
+                        busStopCount: busStopResult.count,
                     };
                 } catch (e) {
-                    console.warn("Kakao API 요청 실패, 실데이터 기반 스마트 우회 작동", e);
+                    console.warn("Kakao API 요청 실패, 가상 데이터로 우회", e);
                     return generateMockData(address);
                 }
             }
 
-            // ✅ API 실패 시 랜덤값이 아닌 "미리 설정해둔 정확한 데이터"를 반환하여 오류 완전 차단
             function generateMockData(address) {
                 return new Promise((resolve) => {
                     setTimeout(() => {
@@ -393,25 +393,34 @@
                         let subDist = 300;
                         let bus = 5;
                         
-                        // 사용자가 핵심 상권을 검색했는데 API가 막혔다면, 배열에 있는 실제 값을 꺼내옴!
                         if (matched) {
-                            comp = matched.comp;
-                            subDist = matched.subDist;
-                            bus = matched.bus;
+                            comp = 45;
+                            subDist = 150;
+                            bus = 18;
                             if(matched.keyword === '강남') { mockLat = 37.4979; mockLng = 127.0276; }
                             else if(matched.keyword === '홍대') { mockLat = 37.5568; mockLng = 126.9245; }
                             else if(matched.keyword === '여의도') { mockLat = 37.5215; mockLng = 126.9243; }
                         } else {
                             const hash = simpleHash(address);
-                            comp = 3 + (hash % 15);
+                            comp = 10 + (hash % 30);
                             subDist = 100 + (hash % 800);
                             bus = 2 + (hash % 15);
+                        }
+
+                        // 가상 환경에서도 테스트할 수 있도록 여러 개의 가상 경쟁점 마커 생성
+                        let mockCompetitors = [];
+                        for(let i=0; i<comp; i++) {
+                            mockCompetitors.push({
+                                place_name: `경쟁점 ${i+1}`,
+                                y: mockLat + (Math.random() - 0.5) * 0.005,
+                                x: mockLng + (Math.random() - 0.5) * 0.005
+                            });
                         }
 
                         resolve({
                             mainCoords: { lat: mockLat, lng: mockLng },
                             totalCompetitors: comp,
-                            competitorPlaces: [], // 가상 환경에서는 지도에 경쟁점 마커 생략 (오류 방지)
+                            competitorPlaces: mockCompetitors,
                             nearestSubwayDist: subDist,
                             busStopCount: bus,
                         });
@@ -431,13 +440,11 @@
             function generateAnalysisData(userInput, apiData, address) {
                 const data = {};
                 const hash = simpleHash(address);
-
                 const matchedCsv = realSeoulData.find(d => address.includes(d.keyword));
 
-                // 경쟁사 1개당 3점 감점, 최소 40점 보장 (경쟁이 심해도 수요 방증)
-                let compScore = Math.max(40, 100 - (apiData.totalCompetitors * 3)); 
+                // 경쟁사 수에 따른 감점 로직 (최소 점수 보장)
+                let compScore = Math.max(10, 100 - (apiData.totalCompetitors * 2)); 
                 
-                // 지하철 거리(10m당 1점 차감, 1km 밖이면 0점) + 버스정류장(1개당 +10점, 최대 100)
                 let subScore = Math.max(0, 100 - (apiData.nearestSubwayDist / 10));
                 let busScore = Math.min(100, apiData.busStopCount * 10);
                 let accessScore = Math.round((subScore + busScore) / 2);
@@ -447,15 +454,13 @@
                 let costScore = Math.round(Math.max(10, Math.min(100, 100 - ((costMetric - 1500) / 4500) * 100)));
                 
                 let potentialScore = 40 + (hash % 50);
+                let trafficScore = 50 + (hash % 40);
+                let trafficCount = 15000 + (hash % 60000); 
+                let trafficText = `${trafficCount.toLocaleString()}명 (추정)`;
                 let ratioText2030 = `${(40 + (hash % 35)).toFixed(1)}% (추정)`;
                 let ratioText4050 = `${(20 + (hash % 20)).toFixed(1)}% (추정)`;
                 let ticketText = `${(25000 + (hash % 20000)).toLocaleString()}원 (추정)`;
                 
-                // 일반 동네(매칭 안 된 곳) 검색 시 유동인구 2만~9만 명 사이의 현실적인 값 부여 (500명 등 비정상 값 완전 차단)
-                let trafficScore = 50 + (hash % 40);
-                let trafficCount = 20000 + (hash % 70000); 
-                let trafficText = `<span class="font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs">(추정)</span>`;
-
                 let meta = { swotData: {}, matchedCsv: null, ageData: [], genderData: [50, 50], featureText: "일반 상권" };
 
                 if (matchedCsv) {
@@ -465,16 +470,15 @@
                     
                     potentialScore = Math.min(100, r2030 + (r4050 * 0.8) + 15); 
                     
-                    // ✅ 매칭된 핵심 상권은 무조건 하드코딩된 '실제 유동인구 수치'를 강력하게 삽입
                     trafficScore = matchedCsv.popScore; 
                     trafficCount = matchedCsv.floatingPop; 
                     
-                    ratioText2030 = `<span class="text-blue-600 font-bold">${r2030}%</span>`;
-                    ratioText4050 = `<span class="text-green-600 font-bold">${r4050}%</span>`;
-                    ticketText = `<span class="text-indigo-600 font-bold">${matchedCsv.avgTicket.toLocaleString()}원</span>`;
+                    ratioText2030 = `<span class="text-blue-600 font-bold">${r2030}%</span> <span class="text-xs"></span>`;
+                    ratioText4050 = `<span class="text-green-600 font-bold">${r4050}%</span> <span class="text-xs"></span>`;
+                    ticketText = `<span class="text-indigo-600 font-bold">${matchedCsv.avgTicket.toLocaleString()}원</span> <span class="text-xs"></span>`;
                     trafficText = `<span class="text-blue-600 font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs text-gray-500">(공공데이터)</span>`;
                     
-                    meta.featureText = `${matchedCsv.keyword} 상권 (2025 공공데이터 연동)`;
+                    meta.featureText = `${matchedCsv.keyword} 상권 (2025 실데이터 연동)`;
                     
                     let rem = Math.max(0, 100 - (r2030 + r4050));
                     let r10 = Math.floor(rem * 0.4);
@@ -494,7 +498,6 @@
                     } 
                 };
                 
-                // ✅ 유동인구수 무조건 정확하게 할당됨
                 data['유동인구'] = { score: trafficScore, details: {'일일 유동인구': trafficText} };
                 data['경쟁 환경'] = { score: compScore, details: { '주요 브랜드 매장': `<span class="font-bold">${apiData.totalCompetitors}개</span>` } };
                 data['접근성 및 가시성'] = { score: accessScore, details: { '가장 가까운 지하철역': `<span class="font-bold">${apiData.nearestSubwayDist}m</span>`, '인근 버스정류장': `<span class="font-bold">${apiData.busStopCount}개</span>` } };
@@ -506,7 +509,7 @@
                 return data;
             }
 
-            // ✅ 사용자 원본 코드로 100% 복구된 카카오맵 렌더링 로직 (마커 및 말풍선 완벽 작동)
+            // ✅ 오리지널 지도 로직 완벽 복구
             function displayMap(mainCoords, competitorPlaces) {
                 if (!window.kakao || !window.kakao.maps || !window.kakao.maps.Map) {
                     elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center p-6 h-full justify-center bg-gray-100 rounded-lg"><svg class="w-12 h-12 mb-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p class="text-sm font-bold text-gray-600 mb-2">카카오맵을 불러올 수 없는 환경입니다.</p><p class="text-xs text-gray-400">도메인이 카카오 디벨로퍼스에 등록되지 않았거나, 인터넷 연결을 확인해주세요.<br/>(임시로 가상 데이터를 통한 분석이 완료되었습니다.)</p></div>';
@@ -539,6 +542,7 @@
                 mainMarker.setMap(map);
                 markers.push(mainMarker);
 
+                // 오리지널 InfoWindow 적용 및 모든 마커 표시
                 competitorPlaces.forEach(place => {
                     const marker = new kakao.maps.Marker({ map: map, position: new kakao.maps.LatLng(place.y, place.x) });
                     const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>` });
@@ -561,7 +565,7 @@
                     totalScore += (score * weight / totalWeight);
                     
                     const color = score >= 80 ? 'bg-blue-500' : score >= 60 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
-                    let detailsHtml = Object.entries(data[key].details).map(([k, v]) => `<li>${k}: <span class="text-gray-700">${v}</span></li>`).join('');
+                    let detailsHtml = Object.entries(data[key].details).map(([k, v]) => `<li>${k}: <span class="font-medium text-gray-700">${v}</span></li>`).join('');
                     
                     container.innerHTML += `
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
