@@ -488,14 +488,14 @@
                     image: new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', new kakao.maps.Size(64, 69), {offset: new kakao.maps.Point(27, 69)})
                 }).setMap(mapInstance);
 
-                // 경쟁점 마커 렌더링 및 브랜드 이름 호버(오버레이) 로직
+                // 경쟁점 마커 렌더링 및 브랜드 이름 호버(오버레이) 로직 복원 완료
                 places.forEach(place => {
                     const marker = new kakao.maps.Marker({ 
                         position: new kakao.maps.LatLng(place.y, place.x) 
                     });
                     marker.setMap(mapInstance);
                     
-                    // Tailwind CSS 충돌을 방지하고 디자인을 개선한 CustomOverlay 사용
+                    // Tailwind CSS 환경에서도 깨지지 않는 CustomOverlay 디자인 적용
                     const content = `<div style="background-color: white; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); white-space: nowrap; transform: translateY(-45px);">
                         ${place.place_name}
                     </div>`;
@@ -503,10 +503,10 @@
                     const customOverlay = new kakao.maps.CustomOverlay({
                         position: new kakao.maps.LatLng(place.y, place.x),
                         content: content,
-                        yAnchor: 1 // 마커 위쪽으로 배치되도록 앵커 설정
+                        yAnchor: 1 // 마커 위쪽에 배치되도록 기준점 설정
                     });
                     
-                    // 데스크톱 마우스 오버 이벤트
+                    // 데스크톱: 마우스 올렸을 때 나타나고, 벗어나면 사라짐
                     kakao.maps.event.addListener(marker, 'mouseover', () => {
                         customOverlay.setMap(mapInstance);
                     });
@@ -514,7 +514,7 @@
                         customOverlay.setMap(null);
                     });
 
-                    // 모바일 터치(클릭) 이벤트 지원
+                    // 모바일/태블릿: 터치(클릭)했을 때 나타나고/사라짐 토글 기능
                     let isOverlayOpen = false;
                     kakao.maps.event.addListener(marker, 'click', () => {
                         if(isOverlayOpen) {
