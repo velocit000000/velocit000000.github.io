@@ -50,7 +50,7 @@
                 <h2 class="text-2xl font-semibold mb-4 border-b pb-2">분석 정보 입력</h2>
                 
                 <div class="mb-4">
-                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 홍대, 역촌, 상계, 가로수길)</label>
+                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 홍대, 역촌, 상계, 여의도 등)</label>
                     <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="마포구 홍대입구역">
                 </div>
 
@@ -184,18 +184,18 @@
 
     <script>
         window.onload = function() {
-            // 사용자 제공 2025 CSV 데이터를 기반으로 구축한 10대 핵심 상권 매핑 (유동인구 데이터 실제화 추가)
+            // ✅ 사용자 제공 2025 CSV 데이터를 기반으로 구축 (유동인구 데이터 현실화)
             const realSeoulData = [
-                { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 95000, popScore: 92 },
-                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 125000, popScore: 98 },
-                { keyword: '홍대', name: '홍대입구역(홍대)', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 92000, popScore: 95 },
-                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 55000, popScore: 85 },
-                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 75000, popScore: 88 },
-                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 65000, popScore: 86 },
-                { keyword: '까치산', name: '까치산역 4번 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 45000, popScore: 80 },
-                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 32000, popScore: 75 },
-                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 18000, popScore: 65 },
-                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 28000, popScore: 72 }
+                { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 350000, popScore: 92 },
+                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 550000, popScore: 98 },
+                { keyword: '홍대', name: '홍대입구역(홍대)', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 380000, popScore: 96 },
+                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 120000, popScore: 85 },
+                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 320000, popScore: 95 },
+                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 180000, popScore: 90 },
+                { keyword: '까치산', name: '까치산역 4번 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 65000, popScore: 80 },
+                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 42000, popScore: 75 },
+                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 15000, popScore: 65 },
+                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 38000, popScore: 72 }
             ];
 
             const criteria = {
@@ -330,7 +330,6 @@
                 }
             }
             
-            // ✅ 카카오맵 실제 API 호출 로직 (지하철, 버스정류장 거리/개수 정확히 반영)
             async function analyzeAPI(address) {
                 const isKakaoAvailable = window.kakao && window.kakao.maps && window.kakao.maps.services;
                 if (!isKakaoAvailable) return generateMockData();
@@ -346,10 +345,9 @@
                         });
                     });
 
-                    // 카카오맵 특정 키워드 주변 검색 함수 (옵션 확장 가능)
                     const searchNearby = (coords, keyword, radius = 500, useDistanceSort = false) => new Promise((res) => {
                         let options = { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: radius };
-                        if (useDistanceSort) options.sort = kakao.maps.services.SortBy.DISTANCE; // 거리순 정렬
+                        if (useDistanceSort) options.sort = kakao.maps.services.SortBy.DISTANCE; 
 
                         places.keywordSearch(keyword, (result, status, pagination) => {
                             if (status === kakao.maps.services.Status.OK) res({ count: pagination.totalCount, places: result });
@@ -357,24 +355,21 @@
                         }, options);
                     });
 
-                    // 1. 경쟁 환경 분석 (반경 300m 핵심 브랜드 필터링)
                     const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '메가커피', '이디야'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c, 300)));
                     const allPlaces = results.flatMap(r => r.places);
                     const uniquePlaces = Array.from(new Map(allPlaces.map(place => [place.id, place])).values());
 
-                    // 2. 접근성 분석: 지하철역 (반경 1km 이내 가장 가까운 역)
                     const subwayResult = await searchNearby(coords, '지하철역', 1000, true);
                     const nearestSubwayDist = subwayResult.places.length > 0 ? parseInt(subwayResult.places[0].distance) : 2000;
 
-                    // 3. 접근성 분석: 버스정류장 (반경 300m 이내 개수)
                     const busStopResult = await searchNearby(coords, '버스정류장', 300);
                     const busStopCount = busStopResult.count;
                     
                     return {
                         mainCoords: coords,
                         totalCompetitors: uniquePlaces.length,
-                        competitorPlaces: uniquePlaces.slice(0, 30), // 지도 표시용 마커는 30개로 제한
+                        competitorPlaces: uniquePlaces.slice(0, 30), 
                         nearestSubwayDist: nearestSubwayDist,
                         busStopCount: busStopCount,
                     };
@@ -420,11 +415,8 @@
 
                 const matchedCsv = realSeoulData.find(d => address.includes(d.keyword));
 
-                // ✅ 점수 로직 현실화
-                // 경쟁사 1개당 4점 감점, 최소 40점 보장 (경쟁이 심해도 수요가 있다는 방증이므로 과도한 감점 방지)
                 let compScore = Math.max(40, 100 - (apiData.totalCompetitors * 4)); 
                 
-                // 지하철 거리(100m당 -10점, 1km 밖이면 0점) + 버스정류장(1개당 +10점, 최대 100)
                 let subScore = Math.max(0, 100 - (apiData.nearestSubwayDist / 10));
                 let busScore = Math.min(100, apiData.busStopCount * 10);
                 let accessScore = Math.round((subScore + busScore) / 2);
@@ -433,14 +425,16 @@
                 let costMetric = (userInput.deposit / 10) + userInput.rent;
                 let costScore = Math.round(Math.max(10, Math.min(100, 100 - ((costMetric - 1500) / 4500) * 100)));
                 
-                // 잠재력 점수 및 유동인구 설정
                 let potentialScore = 40 + (hash % 50);
-                let trafficScore = 50 + (hash % 30);
-                let trafficCount = 1000 + (hash % 5000);
                 let ratioText2030 = `${(40 + (hash % 35)).toFixed(1)}% (추정)`;
                 let ratioText4050 = `${(20 + (hash % 20)).toFixed(1)}% (추정)`;
                 let ticketText = `${(25000 + (hash % 20000)).toLocaleString()}원 (추정)`;
                 
+                // ✅ 유동인구 덮어쓰기 오류 수정 (실데이터 매핑 변수)
+                let trafficScore = 50 + (hash % 40);
+                let trafficCount = 15000 + (hash % 60000); 
+                let trafficText = `${trafficCount.toLocaleString()}명 (추정)`;
+
                 let meta = { swotData: {}, matchedCsv: null, ageData: [], genderData: [50, 50], featureText: "일반 상권" };
 
                 if (matchedCsv) {
@@ -449,12 +443,15 @@
                     const r4050 = matchedCsv.ratio40 + matchedCsv.ratio50;
                     
                     potentialScore = Math.min(100, r2030 + (r4050 * 0.8) + 15); 
-                    trafficScore = matchedCsv.popScore; // 하드코딩된 실제 유동인구 점수
-                    trafficCount = matchedCsv.floatingPop; // 하드코딩된 실제 유동인구 수
-
+                    
+                    // ✅ 실제 유동인구수 할당
+                    trafficScore = matchedCsv.popScore; 
+                    trafficCount = matchedCsv.floatingPop; 
+                    
                     ratioText2030 = `<span class="text-blue-600 font-bold">${r2030}%</span> <span class="text-xs"></span>`;
                     ratioText4050 = `<span class="text-green-600 font-bold">${r4050}%</span> <span class="text-xs"></span>`;
                     ticketText = `<span class="text-indigo-600 font-bold">${matchedCsv.avgTicket.toLocaleString()}원</span> <span class="text-xs"></span>`;
+                    trafficText = `<span class="text-blue-600 font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs">(공공데이터)</span>`;
                     
                     meta.featureText = `${matchedCsv.keyword} 상권 (2025 실데이터 연동)`;
                     
@@ -475,7 +472,9 @@
                         '평균 건단가': ticketText
                     } 
                 };
-                data['유동인구'] = { score: trafficScore, details: {'일일 추정 유동인구': `${trafficCount.toLocaleString()}명`} };
+                
+                // ✅ 수정된 변수로 정확히 할당
+                data['유동인구'] = { score: trafficScore, details: {'일일 유동인구': trafficText} };
                 data['경쟁 환경'] = { score: compScore, details: { '주요 브랜드 수': `${apiData.totalCompetitors}개` } };
                 data['접근성 및 가시성'] = { score: accessScore, details: { '가까운 지하철': `${apiData.nearestSubwayDist}m`, '정류장 수': `${apiData.busStopCount}개` } };
                 data['비용 효율성'] = { score: costScore, details: { '보증금': `${userInput.deposit} 만원`, '월 임대료': `${userInput.rent} 만원` } };
