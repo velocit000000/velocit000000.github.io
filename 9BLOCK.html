@@ -354,7 +354,7 @@
                     });
 
                     // 원래 지정하셨던 세부 브랜드 목록
-                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '커피'];
+                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '콜렉티보', '팀홀튼', '아우어베이커리', '곤트란쉐리에', '엔제리너스','커피'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c)));
                     
                     const allPlaces = results.flatMap(r => r.places);
