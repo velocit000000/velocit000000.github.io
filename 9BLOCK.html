@@ -230,7 +230,6 @@
             };
 
             let mapInstance = null;
-            let markers = [];
             let currentWeights = {};
             let ageChartInstance = null;
             let genderChartInstance = null;
@@ -358,14 +357,19 @@
                         }, { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: 300 });
                     });
 
-                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋'];
+                    // 원래 지정하셨던 세부 브랜드 목록
+                    const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '커피'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c)));
+                    
                     const allPlaces = results.flatMap(r => r.places);
+                    
+                    // 중복된 검색결과(동일 매장) 제거
+                    const uniquePlaces = Array.from(new Map(allPlaces.map(place => [place.id, place])).values());
                     
                     return {
                         mainCoords: coords,
-                        totalCompetitors: allPlaces.length,
-                        competitorPlaces: allPlaces.slice(0, 10),
+                        totalCompetitors: uniquePlaces.length,
+                        competitorPlaces: uniquePlaces.slice(0, 30), // 지도에는 최대 30개까지만 마커 표시
                         nearestSubwayDist: Math.floor(Math.random() * 500) + 50,
                         busStopCount: Math.floor(Math.random() * 15) + 2,
                     };
@@ -382,8 +386,13 @@
                         const mockLng = 126.9780 + (Math.random() - 0.5) * 0.05;
                         resolve({
                             mainCoords: { lat: mockLat, lng: mockLng },
-                            totalCompetitors: Math.floor(Math.random() * 8) + 2,
-                            competitorPlaces: [],
+                            totalCompetitors: Math.floor(Math.random() * 8) + 5,
+                            competitorPlaces: [
+                                { place_name: '스타벅스 (가상 경쟁점)', y: mockLat + 0.001, x: mockLng + 0.001 },
+                                { place_name: '투썸플레이스 (가상 경쟁점)', y: mockLat - 0.0015, x: mockLng - 0.0012 },
+                                { place_name: '할리스 (가상 경쟁점)', y: mockLat + 0.002, x: mockLng - 0.0005 },
+                                { place_name: '메가커피 (가상 경쟁점)', y: mockLat - 0.0005, x: mockLng + 0.002 }
+                            ],
                             nearestSubwayDist: Math.floor(Math.random() * 600) + 100,
                             busStopCount: Math.floor(Math.random() * 10) + 3,
                         });
@@ -454,7 +463,7 @@
                     } 
                 };
                 data['유동인구'] = { score: 50 + (hash % 40), details: {'주중 점심 유동인구': `${500 + (hash % 500)}명`} };
-                data['경쟁 환경'] = { score: compScore, details: { '주요 경쟁사 수': `${apiData.totalCompetitors}개` } };
+                data['경쟁 환경'] = { score: compScore, details: { '주요 브랜드 수': `${apiData.totalCompetitors}개` } };
                 data['접근성 및 가시성'] = { score: accessScore, details: { '가까운 지하철': `${apiData.nearestSubwayDist}m`, '정류장 수': `${apiData.busStopCount}개` } };
                 data['비용 효율성'] = { score: costScore, details: { '보증금': `${userInput.deposit} 만원`, '월 임대료': `${userInput.rent} 만원` } };
                 data['물리적 조건'] = { score: physScore, details: { '전용 면적': `${userInput.area} 평`, '층 수': `${userInput.floor} 층` } };
@@ -466,19 +475,38 @@
 
             function displayMap(coords, places) {
                 if (!window.kakao || !window.kakao.maps || !window.kakao.maps.Map) {
-                    elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center"><svg class="w-10 h-10 mb-2 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p>카카오맵 로드 불가 환경<br>(가상 데이터 기반 시뮬레이션 진행 완료)</p></div>';
+                    elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center p-6 h-full justify-center bg-gray-100 rounded-lg"><svg class="w-12 h-12 mb-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p class="text-sm font-bold text-gray-600 mb-2">카카오맵을 불러올 수 없는 환경입니다.</p><p class="text-xs text-gray-400">도메인이 카카오 디벨로퍼스에 등록되지 않았거나, 인터넷 연결을 확인해주세요.<br/>(임시로 가상 데이터를 통한 분석이 완료되었습니다.)</p></div>';
                     return;
                 }
+                
                 elements.map.innerHTML = '';
                 mapInstance = new kakao.maps.Map(elements.map, { center: new kakao.maps.LatLng(coords.lat, coords.lng), level: 4 });
                 
+                // 내 위치(검색 위치) 마커
                 new kakao.maps.Marker({
                     position: mapInstance.getCenter(),
                     image: new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', new kakao.maps.Size(64, 69), {offset: new kakao.maps.Point(27, 69)})
                 }).setMap(mapInstance);
 
-                places.forEach(p => {
-                    new kakao.maps.Marker({ position: new kakao.maps.LatLng(p.y, p.x) }).setMap(mapInstance);
+                // 경쟁점 마커 렌더링 및 InfoWindow(브랜드 이름 호버) 로직 복원
+                places.forEach(place => {
+                    const marker = new kakao.maps.Marker({ 
+                        position: new kakao.maps.LatLng(place.y, place.x) 
+                    });
+                    marker.setMap(mapInstance);
+                    
+                    // 마우스 오버 시 뜨는 정보창 설정
+                    const infowindow = new kakao.maps.InfoWindow({ 
+                        content: `<div style="padding:5px 10px; font-size:13px; font-weight:bold; color:#333; min-width:120px; text-align:center; white-space:nowrap;">${place.place_name}</div>` 
+                    });
+                    
+                    // 마커에 마우스 이벤트 등록
+                    kakao.maps.event.addListener(marker, 'mouseover', () => {
+                        infowindow.open(mapInstance, marker);
+                    });
+                    kakao.maps.event.addListener(marker, 'mouseout', () => {
+                        infowindow.close();
+                    });
                 });
             }
 
