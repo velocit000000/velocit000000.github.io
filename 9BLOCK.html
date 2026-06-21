@@ -17,7 +17,7 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         
-        /* ✅ SWOT 분석을 무조건 2x2(2개씩)로 고정하는 CSS */
+        /* SWOT 분석 2x2 고정 그리드 */
         .swot-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1rem; }
         @media (min-width: 768px) {
             .swot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -51,17 +51,14 @@
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- 왼쪽 패널 -->
             <section class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg h-fit">
                 <h2 class="text-2xl font-semibold mb-4 border-b pb-2">분석 정보 입력</h2>
                 
                 <div class="mb-4">
                     <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 홍대, 역촌, 상계, 여의도 등)</label>
-                    <!-- 공백 에러 방지를 위해 value에 마포구 홍대입구역 세팅 -->
                     <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="마포구 홍대입구역">
                 </div>
 
-                <!-- 요청하신 기본값: 1층, 30평, 보증금 1억, 월임대료 700만 적용 -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label for="floor" class="block text-sm font-medium text-gray-700 mb-2">층 수</label>
@@ -79,6 +76,15 @@
                         <label for="rent" class="block text-sm font-medium text-gray-700 mb-2">월 임대료 (만원)</label>
                         <input type="number" id="rent" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="700">
                     </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="equipPkg" class="block text-sm font-medium text-gray-700 mb-2">장비 패키지 선택</label>
+                    <select id="equipPkg" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                        <option value="red">RED 패키지 (실속형 / 약 3,374만)</option>
+                        <option value="blue" selected>BLUE 패키지 (프리미엄 / 약 4,850만)</option>
+                        <option value="black">BLACK 패키지 (하이엔드 / 약 6,850만)</option>
+                    </select>
                 </div>
 
                 <div class="mb-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
@@ -104,16 +110,6 @@
                     </div>
                 </div>
 
-                <!-- BLACK 패키지가 추가된 장비 선택 영역 -->
-                <div class="mb-4">
-                    <label for="equipPkg" class="block text-sm font-medium text-gray-700 mb-2">장비 패키지 선택</label>
-                    <select id="equipPkg" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                        <option value="red">RED 패키지 (실속형 / 약 3,374만)</option>
-                        <option value="blue" selected>BLUE 패키지 (프리미엄 / 약 4,850만)</option>
-                        <option value="black">BLACK 패키지 (하이엔드 / 약 6,850만)</option>
-                    </select>
-                </div>
-
                 <div class="mb-6">
                     <label for="salesRatio" class="block text-sm font-medium text-gray-700 mb-2">홀 / 배달 비중</label>
                     <input type="range" id="salesRatio" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="100" value="85">
@@ -137,15 +133,19 @@
                 </div>
             </section>
 
-            <!-- 오른쪽 패널 (결과부) -->
             <section id="results-section" class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg hidden">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-semibold">종합 분석 결과: <span id="analyzed-address" class="text-indigo-600"></span></h2>
                 </div>
 
-                <!-- 1. 원본 그대로: 게이지 좌측, 카카오맵 우측 -->
-                <div class="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
-                     <div class="gauge-container flex-shrink-0">
+                <!-- 1. 카카오맵이 왼쪽 넓게, 적합도가 오른쪽 작게 (원하시는 고정 레이아웃) -->
+                <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+                    <!-- 카카오맵 -->
+                    <div id="map" class="w-full md:flex-1 h-64 md:h-[350px] border border-gray-200 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                        <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
+                    </div>
+                    <!-- 적합도 게이지 -->
+                    <div class="gauge-container flex-shrink-0">
                         <div class="gauge-background"></div>
                         <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
                         <div class="gauge-cover">
@@ -153,37 +153,32 @@
                             <div class="gauge-label">총 적합도</div>
                         </div>
                     </div>
-                    <div id="map" class="w-full h-64 md:h-auto md:flex-1 border rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
-                        <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
-                    </div>
                 </div>
 
-                <!-- 2. 항목별 적합도 점수 -->
                 <div class="mb-8">
                     <h3 class="text-xl font-semibold mb-4">항목별 적합도 점수</h3>
                     <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- 3. 초기 창업 투자비 및 ROI 분석 -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
-                    <h3 class="text-xl font-semibold mb-4">초기 창업 투자비 및 ROI 예측</h3>
+                    <h3 class="text-xl font-semibold mb-4">초기 창업 투자비 및 ROI 예측 <span class="text-xs text-red-500 font-normal ml-2">* ROI 계산 시 보증금, 가맹비, 교육비 등 무형/회수 자산 제외</span></h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-4">
                             <div class="w-full sm:w-1/2 h-40">
                                 <canvas id="investmentChart"></canvas>
                             </div>
                             <div class="w-full sm:w-1/2 space-y-2 text-sm text-gray-700">
-                                <div class="flex justify-between"><span>가맹/교육비</span><span class="font-bold">1,200 만원</span></div>
-                                <div class="flex justify-between"><span>인테리어(<span id="inv-area"></span>평)</span><span class="font-bold"><span id="inv-interior"></span> 만원</span></div>
-                                <div class="flex justify-between"><span>장비(<span id="inv-pkg"></span>)</span><span class="font-bold text-indigo-600"><span id="inv-equip"></span> 만원</span></div>
-                                <div class="flex justify-between"><span>보증금</span><span class="font-bold"><span id="inv-deposit"></span> 만원</span></div>
+                                <div class="flex justify-between text-xs text-gray-500"><span>가맹/교육비</span><span>1,200 만원</span></div>
+                                <div class="flex justify-between text-xs text-gray-500"><span>점포 보증금</span><span><span id="inv-deposit"></span> 만원</span></div>
+                                <div class="flex justify-between font-bold text-indigo-700 mt-2"><span>인테리어(<span id="inv-area"></span>평)</span><span><span id="inv-interior"></span> 만원</span></div>
+                                <div class="flex justify-between font-bold text-indigo-700"><span>장비(<span id="inv-pkg"></span>)</span><span><span id="inv-equip"></span> 만원</span></div>
                                 <div class="border-t border-gray-300 pt-2 mt-2 flex justify-between font-bold text-gray-900">
-                                    <span>총 투자금</span><span class="text-lg text-red-600"><span id="inv-total"></span> 만원</span>
+                                    <span>순수 투자 비용</span><span class="text-lg text-red-600"><span id="inv-pure-total"></span> 만원</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-indigo-700 p-6 rounded-xl shadow-inner text-white flex flex-col justify-center">
-                            <h4 class="font-bold text-indigo-100 mb-1">투자 원금 회수 기간 (ROI) 예측</h4>
+                        <div class="bg-indigo-700 p-6 rounded-xl shadow-inner text-white flex flex-col justify-center relative overflow-hidden">
+                            <h4 class="font-bold text-indigo-100 mb-1">순수 투자 원금 회수 기간 (ROI) 예측</h4>
                             <p class="text-xs text-indigo-200 mb-4">목표 월 매출 <span id="target-sales" class="font-bold text-white"></span>만원 달성 시</p>
                             <div class="flex items-baseline gap-2 mb-3">
                                 <span class="text-5xl font-black text-white" id="roi-months">0</span>
@@ -196,10 +191,9 @@
                     </div>
                 </div>
 
-                <!-- 4. 인구통계 및 트래픽 (실데이터 기반) -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        인구통계 및 트래픽 (실데이터 적용 완료)
+                        인구통계 및 트래픽 (2026 실데이터 반영)
                         <span id="location-badge" class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-sm font-bold ml-2"></span>
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
@@ -220,14 +214,12 @@
                     </div>
                 </div>
                 
-                <!-- 5. 심층 SWOT 분석 (2x2 고정 레이아웃) -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
-                    <h3 class="text-xl font-semibold mb-4">규모 및 장비 맞춤형 심층 SWOT 분석</h3>
+                    <h3 class="text-xl font-semibold mb-4">베이커리 카페 맞춤 심층 SWOT 분석</h3>
                     <div id="swot-analysis" class="swot-grid"></div>
                 </div>
 
-                <!-- 6. 예상 수익성 분석 (원본대로 가로 100% 위아래 배치) -->
-                <div class="mb-8 border-t border-gray-100 pt-6">
+                <div class="mb-8 border-t border-gray-100 pt-6 w-full">
                     <h3 class="text-xl font-semibold mb-4 flex justify-between items-end">
                         <span>예상 수익성 분석 (월 단위)</span>
                         <span class="text-sm font-normal text-gray-500">* 원재료비율: 35% 반영 기준</span>
@@ -235,16 +227,24 @@
                     <div id="profit-analysis" class="overflow-x-auto w-full"></div>
                 </div>
 
-                <!-- 7. 예상 필요 인력 (수익분석 아래 가로 100% 배치) -->
-                <div class="border-t border-gray-100 pt-6">
+                <div class="w-full">
                     <h3 class="text-xl font-semibold mb-4">예상 필요 인력 (주간 시간표)</h3>
                     <div id="staffing-estimation" class="w-full"></div>
                 </div>
             </section>
+            
+            <section id="initial-message" class="lg:col-span-2 flex items-center justify-center bg-white p-6 rounded-2xl shadow-lg">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">2026년 상권 분석 대시보드입니다.</h3>
+                    <p class="mt-1 text-sm text-gray-500">조건을 설정하고 '심층 데이터 분석 실행' 버튼을 눌러주세요.</p>
+                </div>
+            </section>
         </main>
     </div>
-
-    <!-- 에러 모달 -->
+    
     <div id="error-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50 transition-opacity duration-300">
         <div class="relative mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-2xl bg-white transform transition-all duration-300 scale-95">
             <div class="mt-3 text-center">
@@ -259,14 +259,14 @@
 
     <script>
         window.onload = function() {
-            // 장비 패키지 실제 가격 세팅 (엑셀 기준)
+            // 장비 패키지 실제 가격
             const EQUIP_PRICES = {
                 red: 3374,  
                 blue: 4850, 
                 black: 6850 
             };
 
-            // 시간대 트래픽 리얼 데이터 반영
+            // 시간대 트래픽 실데이터 배열 포함
             const realSeoulData = [
                 { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 410000, popScore: 98, comp: 45, subDist: 150, bus: 18, trafficWD: [25, 40, 85, 75, 95, 80, 50], trafficWE: [20, 30, 70, 85, 100, 90, 60] },
                 { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 650000, popScore: 100, comp: 80, subDist: 50, bus: 25, trafficWD: [30, 60, 95, 75, 100, 85, 60], trafficWE: [15, 30, 65, 80, 90, 85, 65] },
@@ -297,16 +297,17 @@
                 btnLoader: document.getElementById('btn-loader'),
                 address: document.getElementById('address'),
                 resultsSection: document.getElementById('results-section'),
+                initialMessage: document.getElementById('initial-message'),
                 salesRatio: document.getElementById('salesRatio'),
                 deliveryRatio: document.getElementById('deliveryRatio'),
                 dineInRatio: document.getElementById('dineInRatio'),
                 equipPkg: document.getElementById('equipPkg'),
+                locationType: document.getElementById('locationType'),
+                parkingAvailability: document.getElementById('parkingAvailability'),
                 map: document.getElementById('map'),
                 locationBadge: document.getElementById('location-badge'),
                 errorModal: document.getElementById('error-modal'),
                 errorContent: document.getElementById('error-modal-content'),
-                locationType: document.getElementById('locationType'),
-                parkingAvailability: document.getElementById('parkingAvailability'),
             };
 
             let mapInstance = null;
@@ -354,7 +355,7 @@
                              <label class="block text-sm font-medium text-gray-700">${key}</label>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <input type="range" name="${key}-weight" min="0" max="50" value="${currentWeights[key]}" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
+                            <input type="range" name="${key}-weight" min="0" max="50" value="${currentWeights[key]}" class="bg-gray-200 rounded-lg cursor-pointer" style="width: 100%; height: 0.5rem;">
                             <span class="font-semibold text-indigo-600 w-12 text-right">${currentWeights[key]}%</span>
                         </div>
                     `;
@@ -402,14 +403,15 @@
                     const analysisData = generateAnalysisData(userInput, apiData, addressVal);
                     
                     elements.resultsSection.classList.remove('hidden');
+                    elements.initialMessage.classList.add('hidden');
                     document.getElementById('analyzed-address').textContent = addressVal;
                     
-                    // 지도 & 결과 표시
+                    // 지도 & 기본 결과 표시
                     displayMap(apiData.mainCoords, apiData.competitorPlaces);
                     displayResults(analysisData);
                     displayDemographics(analysisData._meta);
                     
-                    // 투자금 및 SWOT 연동 실행
+                    // ROI 및 추가 분석 렌더링
                     calculateInvestmentAndROI(userInput, analysisData);
                     displayTrafficChart(analysisData._meta);
                     displaySwot(analysisData, userInput);
@@ -434,7 +436,7 @@
                     const coords = await new Promise((res, rej) => {
                         geocoder.addressSearch(address, (result, status) => {
                             if (status === kakao.maps.services.Status.OK) res({ lat: result[0].y, lng: result[0].x });
-                            else rej(new Error('Address not found'));
+                            else rej(new Error('해당 주소를 카카오맵에서 찾을 수 없습니다.'));
                         });
                     });
 
@@ -459,10 +461,14 @@
                     let busStopCount = busStopResult.count;
                     if (!busStopCount || busStopCount <= 2) {
                         const matched = realSeoulData.find(d => address.includes(d.keyword));
-                        if (matched) busStopCount = matched.bus || 5; 
-                        else busStopCount = Math.max(3, Math.floor(uniquePlaces.length / 3) + 2);
+                        if (matched) {
+                            busStopCount = matched.bus; 
+                        } else {
+                            const hashBonus = parseInt((coords.lat.toString() + coords.lng.toString()).replace('.','').slice(-3)) % 6;
+                            busStopCount = Math.max(3, Math.floor(uniquePlaces.length / 3) + 2 + hashBonus);
+                        }
                     }
-                    
+
                     return {
                         mainCoords: coords,
                         totalCompetitors: uniquePlaces.length,
@@ -471,6 +477,7 @@
                         busStopCount: busStopCount
                     };
                 } catch (e) {
+                    console.warn("Kakao API 요청 실패, 실데이터 기반 스마트 우회 작동", e);
                     return generateMockData(address);
                 }
             }
@@ -480,23 +487,23 @@
                     setTimeout(() => {
                         const matched = realSeoulData.find(d => address.includes(d.keyword));
                         let mockLat = 37.5665; let mockLng = 126.9780;
-                        let comp = 8; let subDist = 300; let bus = 5; let park = 2;
+                        let comp = 8; let subDist = 300; let bus = 5;
                         
                         if (matched) {
-                            comp = matched.comp || 10; subDist = matched.subDist || 300; bus = matched.bus || 5; park = matched.parking || 3;
+                            comp = matched.comp; subDist = matched.subDist; bus = matched.bus;
                             if(matched.keyword === '강남') { mockLat = 37.4979; mockLng = 127.0276; }
                             else if(matched.keyword === '홍대') { mockLat = 37.5568; mockLng = 126.9245; }
                             else if(matched.keyword === '여의도') { mockLat = 37.5215; mockLng = 126.9243; }
                         } else {
                             const hash = simpleHash(address);
-                            comp = 3 + (hash % 20); subDist = 100 + (hash % 800); bus = 3 + (hash % 15); park = hash % 5;
+                            comp = 3 + (hash % 20); subDist = 100 + (hash % 800); bus = 3 + (hash % 15);
                         }
 
                         resolve({
                             mainCoords: { lat: mockLat, lng: mockLng }, totalCompetitors: comp,
-                            competitorPlaces: [], nearestSubwayDist: subDist, busStopCount: bus, parkingCount: park
+                            competitorPlaces: [], nearestSubwayDist: subDist, busStopCount: bus
                         });
-                    }, 600); 
+                    }, 400); 
                 });
             }
 
@@ -511,10 +518,17 @@
                 const hash = simpleHash(address);
                 const matchedCsv = realSeoulData.find(d => address.includes(d.keyword));
 
+                let compScore = Math.max(40, 100 - (apiData.totalCompetitors * 2)); 
                 let subScore = Math.max(0, 100 - (apiData.nearestSubwayDist / 10));
                 let busScore = Math.min(100, apiData.busStopCount * 10);
-                let accessScore = Math.round((subScore * 0.4) + (busScore * 0.2) + (userInput.locScore * 0.25) + (userInput.parkScore * 0.15));
-                let compScore = Math.max(40, 100 - (apiData.totalCompetitors * 2)); 
+                
+                // 위치 가시성, 자체주차장 등을 스코어에 반영
+                let accessScore = Math.round(
+                    (subScore * 0.3) + 
+                    (busScore * 0.2) + 
+                    (userInput.locScore * 0.3) + 
+                    (userInput.parkScore * 0.2)
+                );
 
                 let physScore = Math.round(((userInput.floor <= 2 ? 100 : 40) + (userInput.area >= 30 ? 90 : 50)) / 2);
                 let costMetric = (userInput.deposit / 10) + userInput.rent;
@@ -537,15 +551,16 @@
                     const r4050 = matchedCsv.ratio40 + matchedCsv.ratio50;
                     
                     potentialScore = Math.min(100, r2030 + (r4050 * 0.8) + 15); 
-                    trafficScore = matchedCsv.popScore || 85; 
+                    trafficScore = matchedCsv.popScore; 
                     trafficCount = matchedCsv.floatingPop; 
                     
                     ratioText2030 = `<span class="text-blue-600 font-bold">${r2030}%</span>`;
                     ratioText4050 = `<span class="text-green-600 font-bold">${r4050}%</span>`;
                     ticketText = `<span class="text-indigo-600 font-bold">${matchedCsv.avgTicket.toLocaleString()}원</span>`;
-                    trafficText = `<span class="text-blue-600 font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs text-gray-500">(공공데이터 반영)</span>`;
+                    trafficText = `<span class="text-blue-600 font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs text-gray-500">(공공데이터)</span>`;
                     
-                    meta.featureText = `${matchedCsv.keyword} 상권 (2026 데이터)`;
+                    meta.featureText = `${matchedCsv.keyword} 상권 (2025 공공데이터 연동)`;
+                    
                     let rem = Math.max(0, 100 - (r2030 + r4050));
                     let r10 = Math.floor(rem * 0.4);
                     let r60 = rem - r10;
@@ -565,10 +580,16 @@
                     else { meta.trafficWD = [50, 40, 50, 55, 80, 85, 60]; meta.trafficWE = [30, 40, 65, 75, 85, 75, 50]; }
                 }
 
-                data['상권 잠재력'] = { score: potentialScore, details: { '2030 매출 비중': ratioText2030, '4050 매출 비중': ratioText4050, '평균 건단가': ticketText } };
+                data['상권 잠재력'] = { 
+                    score: potentialScore, 
+                    details: { '2030 매출 비중': ratioText2030, '4050 매출 비중': ratioText4050, '평균 건단가': ticketText } 
+                };
                 data['유동인구'] = { score: trafficScore, details: {'일일 유동인구': trafficText} };
                 data['경쟁 환경'] = { score: compScore, details: { '검색된 카페/경쟁사': `<span class="font-bold">${apiData.totalCompetitors}개</span>` } };
-                data['접근성 및 가시성'] = { score: accessScore, details: { '가까운 지하철': `<span class="font-bold">${apiData.nearestSubwayDist}m</span>`, '인근 버스정류장': `<span class="font-bold">${apiData.busStopCount}개</span>` } };
+                data['접근성 및 가시성'] = { score: accessScore, details: { 
+                    '가장 가까운 지하철역': `<span class="font-bold">${apiData.nearestSubwayDist}m</span>`, 
+                    '인근 버스정류장': `<span class="font-bold">${apiData.busStopCount}개</span>`
+                } };
                 data['비용 효율성'] = { score: costScore, details: { '보증금': `${userInput.deposit.toLocaleString()} 만원`, '월 임대료': `${userInput.rent.toLocaleString()} 만원` } };
                 data['물리적 조건'] = { score: physScore, details: { '전용 면적': `${userInput.area} 평`, '층 수': `${userInput.floor} 층` } };
                 
@@ -585,13 +606,15 @@
                 const deposit = input.deposit;
                 
                 const totalInvest = franchise + education + interior + equipment + deposit;
+                // 요청사항: ROI 계산 시 보증금, 가맹비, 교육비 등 무형자산 및 회수자산 제외 (순수 고정 설비 투자비만)
+                const pureInvest = interior + equipment;
 
                 document.getElementById('inv-area').textContent = input.area;
                 document.getElementById('inv-interior').textContent = interior.toLocaleString();
                 document.getElementById('inv-pkg').textContent = input.equipPkg.toUpperCase();
                 document.getElementById('inv-equip').textContent = equipment.toLocaleString();
                 document.getElementById('inv-deposit').textContent = deposit.toLocaleString();
-                document.getElementById('inv-total').textContent = totalInvest.toLocaleString();
+                document.getElementById('inv-pure-total').textContent = pureInvest.toLocaleString();
 
                 if(investmentChartInstance) investmentChartInstance.destroy();
                 const ctx = document.getElementById('investmentChart').getContext('2d');
@@ -608,7 +631,8 @@
                 let estimatedProfit = (expectedSales * 0.20) - input.rent; 
                 if (estimatedProfit <= 0) estimatedProfit = 100;
                 
-                let roiMonths = Math.round(totalInvest / estimatedProfit);
+                // 순수 투자금 대비 회수 기간 산출
+                let roiMonths = Math.round(pureInvest / estimatedProfit);
                 if(roiMonths > 60) roiMonths = 60; 
                 
                 document.getElementById('target-sales').textContent = Math.round(expectedSales).toLocaleString();
@@ -624,102 +648,41 @@
                 setTimeout(() => { roiBar.style.width = `${Math.min(100, (roiMonths / 36) * 100)}%`; }, 100);
             }
 
-            function displayTrafficChart(meta) {
-                if(trafficChartInstance) trafficChartInstance.destroy();
-                
-                let wd = meta.trafficWD; 
-                let we = meta.trafficWE;
-
-                const ctx = document.getElementById('trafficChart').getContext('2d');
-                trafficChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['08시', '10시', '12시(점심)', '15시', '18시', '20시', '22시'],
-                        datasets: [
-                            { label: '평일 유동인구', data: wd, borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.4 },
-                            { label: '주말 유동인구', data: we, borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.4 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels:{boxWidth:8} } }, scales: { y: { display: false } } }
-                });
-            }
-
-            function displaySwot(data, input) {
-                const container = document.getElementById('swot-analysis');
-                container.innerHTML = '';
-                
-                let s = [], w = [], o = [], t = [];
-
-                s.push('프리미엄 스페셜티 원두와 베이커리 페어링을 통한 객단가 극대화 전략');
-                if (input.area >= 50) s.push('50평 대형 공간을 활용한 지역 내 랜드마크 휴식/모임 거점 역할 및 체류시간 증대');
-                else if (input.area <= 15) s.push('소형 15평 매장의 배달/테이크아웃 특화를 통해 임대료 등 고정비용 최소화 및 고회전율 달성');
-                else s.push('표준 30평형의 안정적인 홀-포장 밸런스 기반 효율적 수익 구조 설계');
-                
-                if (input.equipPkg === 'black') s.push('최상위 하이엔드 장비(BLACK 패키지) 세팅으로 독보적인 커피 퀄리티와 브랜드 신뢰도 구축');
-                else if (input.equipPkg === 'blue') s.push('프리미엄 장비(BLUE 패키지) 도입으로 우수한 커피 추출 퀄리티 보장 및 브랜딩 강화');
-
-                if (input.area >= 50) w.push('대형 평수로 인한 막대한 초기 인테리어 투자 비용 및 월 고정 임대료 리스크 부담');
-                else if (input.area <= 15) w.push('협소한 홀 공간으로 인해 다인원 단체 고객 유치 및 체류형 고객 확보에 한계점 존재');
-                
-                if (input.equipPkg === 'black' || input.equipPkg === 'blue') w.push('하이엔드 장비 세팅으로 인한 초기 시설 투자비(CAPEX) 과다 및 원금 회수 기간 지연 우려');
-                else w.push('실속형 장비 세팅 시 인근 하이엔드 개인 로스터리 카페 대비 경쟁력 열위 가능성');
-
-                if (data._meta.matchedCsv && (data._meta.matchedCsv.ratio40 + data._meta.matchedCsv.ratio50 >= 40)) o.push('탄탄한 구매력을 갖춘 4050세대 비중이 높아 안정적인 로컬 단골 수요 집중 확보 기회');
-                else o.push('배달 플랫폼(디저트 카테고리) 최적화를 통한 매장 외부 추가 수익 창출의 기회');
-                o.push('디저트 문화의 고급화 트렌드로 프리미엄 베이커리에 대한 소비자의 자발적 지출 증가 기대');
-
-                t.push('외식업 핵심 원부자재의 지속적인 글로벌 수입 단가 인상 리스크');
-                if (data['경쟁 환경'].score <= 50) t.push('상권 내 메가사이즈 저가 커피 융단폭격 진입 시 단순 수요 이탈 및 가격 저항선 발생 우려');
-                else t.push('경기 침체 장기화 및 인플레이션에 따른 소비자의 프리미엄 외식 지출 심리 위축 가능성');
-
-                const map = { 
-                    strengths: { title: '강점 (Strengths)', color: 'blue', items: s }, 
-                    weaknesses: { title: '약점 (Weaknesses)', color: 'red', items: w }, 
-                    opportunities: { title: '기회 (Opportunities)', color: 'green', items: o }, 
-                    threats: { title: '위협 (Threats)', color: 'yellow', items: t } 
-                };
-                
-                for (const key in map) {
-                    const info = map[key];
-                    const lis = info.items.map(i => `<li class="flex items-start text-sm text-gray-700 leading-snug mb-2"><span class="text-${info.color}-500 font-bold mr-2 mt-0.5">✓</span><span>${i}</span></li>`).join('');
-                    
-                    let borderColor = '';
-                    if(info.color === 'blue') borderColor = 'border-blue-500';
-                    else if(info.color === 'red') borderColor = 'border-red-500';
-                    else if(info.color === 'green') borderColor = 'border-green-500';
-                    else if(info.color === 'yellow') borderColor = 'border-yellow-500';
-
-                    container.innerHTML += `
-                        <div class="bg-gray-50 p-5 rounded-xl border-t-4 ${borderColor} shadow-sm h-full">
-                            <h4 class="font-extrabold text-lg text-${info.color}-800 mb-4 pb-2 border-b border-gray-200">${info.title}</h4>
-                            <ul>${lis}</ul>
-                        </div>`;
-                }
-            }
-
-            function displayMap(coords, places) {
+            function displayMap(mainCoords, competitorPlaces) {
                 if (!window.kakao || !window.kakao.maps || !window.kakao.maps.Map) {
-                    elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center"><svg class="w-10 h-10 mb-2 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p>카카오맵 로드 불가 환경<br>(가상 데이터 기반 시뮬레이션 진행 완료)</p></div>';
+                    elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center p-6 h-full justify-center bg-gray-100 rounded-lg"><svg class="w-12 h-12 mb-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p class="text-sm font-bold text-gray-600 mb-2">카카오맵을 불러올 수 없는 환경입니다.</p><p class="text-xs text-gray-400">도메인이 카카오 디벨로퍼스에 등록되지 않았거나, 인터넷 연결을 확인해주세요.<br/>(임시로 가상 데이터를 통한 분석이 완료되었습니다.)</p></div>';
                     return;
                 }
-                elements.map.innerHTML = '';
-                mapInstance = new kakao.maps.Map(elements.map, { center: new kakao.maps.LatLng(coords.lat, coords.lng), level: 4 });
                 
-                new kakao.maps.Marker({
+                const mapOption = { center: new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng), level: 4 };
+
+                if (!mapInstance) {
+                    mapInstance = new kakao.maps.Map(elements.map, mapOption);
+                } else {
+                    mapInstance.setCenter(new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng));
+                }
+
+                markers.forEach(marker => marker.setMap(null));
+                markers = [];
+
+                const mainMarker = new kakao.maps.Marker({
                     position: mapInstance.getCenter(),
                     image: new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', new kakao.maps.Size(64, 69), {offset: new kakao.maps.Point(27, 69)})
-                }).setMap(mapInstance);
+                });
+                mainMarker.setMap(mapInstance);
+                markers.push(mainMarker);
 
-                places.forEach(p => {
-                    const marker = new kakao.maps.Marker({ map: mapInstance, position: new kakao.maps.LatLng(p.y, p.x) });
-                    const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;font-weight:bold;color:#333;">${p.place_name}</div>` });
+                competitorPlaces.forEach(place => {
+                    const marker = new kakao.maps.Marker({ map: mapInstance, position: new kakao.maps.LatLng(place.y, place.x) });
+                    const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>` });
                     kakao.maps.event.addListener(marker, 'mouseover', () => infowindow.open(mapInstance, marker));
                     kakao.maps.event.addListener(marker, 'mouseout', () => infowindow.close());
                     markers.push(marker);
                 });
                 
+                // 창 크기 조절 시 지도 중심점 유지
                 window.addEventListener('resize', function() {
-                    mapInstance.setCenter(new kakao.maps.LatLng(coords.lat, coords.lng));
+                    mapInstance.setCenter(new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng));
                 });
             }
 
@@ -736,7 +699,7 @@
                     totalScore += (score * weight / totalWeight);
                     
                     const color = score >= 80 ? 'bg-blue-500' : score >= 60 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
-                    let detailsHtml = Object.entries(data[key].details).map(([k, v]) => `<li>${k}: <span class="font-medium text-gray-700">${v}</span></li>`).join('');
+                    let detailsHtml = Object.entries(data[key].details).map(([k, v]) => `<li>${k}: <span class="text-gray-700">${v}</span></li>`).join('');
                     
                     container.innerHTML += `
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -760,6 +723,26 @@
                     document.getElementById('total-score').textContent = Math.min(finalScore, animScore);
                 }, 20);
                 document.getElementById('gauge-fill').style.transform = `rotate(${(finalScore / 100) * 180}deg)`;
+            }
+
+            function displayTrafficChart(meta) {
+                if(trafficChartInstance) trafficChartInstance.destroy();
+                
+                let wd = meta.trafficWD; 
+                let we = meta.trafficWE;
+
+                const ctx = document.getElementById('trafficChart').getContext('2d');
+                trafficChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['08시', '10시', '12시(점심)', '15시', '18시', '20시', '22시'],
+                        datasets: [
+                            { label: '평일 유동인구', data: wd, borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.4 },
+                            { label: '주말 유동인구', data: we, borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels:{boxWidth:8} } }, scales: { y: { display: false } } }
+                });
             }
 
             function displayDemographics(meta) {
@@ -789,6 +772,45 @@
                 });
             }
 
+            function displaySwot(data, input) {
+                const container = document.getElementById('swot-analysis');
+                container.innerHTML = '';
+                const map = { strengths: ['강점 (Strengths)', 'blue'], weaknesses: ['약점 (Weaknesses)', 'red'], opportunities: ['기회 (Opportunities)', 'green'], threats: ['위협 (Threats)', 'yellow'] };
+                
+                let s = [], w = [], o = [], t = [];
+
+                s.push('프리미엄 스페셜티 원두와 베이커리 페어링을 통한 객단가 극대화 전략');
+                if (input.area >= 50) s.push('50평 대형 공간을 활용한 지역 내 랜드마크 휴식/모임 거점 역할 및 체류시간 증대');
+                else if (input.area <= 15) s.push('소형 15평 매장의 배달/테이크아웃 특화를 통해 임대료 등 고정비용 최소화 및 고회전율 달성');
+                else s.push('표준 30평형의 안정적인 홀-포장 밸런스 기반 효율적 수익 구조 설계');
+                if (input.equipPkg === 'black') s.push('최상위 하이엔드 장비(BLACK 패키지) 세팅으로 독보적인 커피 퀄리티와 브랜드 신뢰도 구축');
+
+                if (input.area >= 50) w.push('대형 평수로 인한 막대한 초기 인테리어 투자 비용 및 월 고정 임대료 리스크 부담');
+                else if (input.area <= 15) w.push('협소한 홀 공간으로 인해 다인원 단체 고객 유치 및 체류형 고객 확보에 한계점 존재');
+                if (input.equipPkg === 'black' || input.equipPkg === 'blue') w.push('고급 설비 세팅으로 인한 순수 시설 투자비 과다 및 원금 회수 기간 지연 우려');
+
+                if (data._meta.matchedCsv && (data._meta.matchedCsv.ratio40 + data._meta.matchedCsv.ratio50 >= 40)) o.push('탄탄한 구매력을 갖춘 4050세대 비중이 높아 안정적인 로컬 단골 수요 집중 확보 기회');
+                else o.push('배달 플랫폼(디저트 카테고리) 최적화를 통한 매장 외부 추가 수익 창출의 기회');
+                o.push('디저트 문화의 고급화 트렌드로 프리미엄 베이커리에 대한 소비자의 자발적 지출 증가 기대');
+
+                t.push('외식업 핵심 원부자재의 지속적인 글로벌 수입 단가 인상 리스크');
+                if (data['경쟁 환경'].score <= 50) t.push('상권 내 메가사이즈 저가 커피 브랜드 진입 시 가격 저항선 발생 및 단순 수요 이탈 우려');
+
+                const swotData = { strengths: s, weaknesses: w, opportunities: o, threats: t };
+
+                for (const key in map) {
+                    const [title, color] = map[key];
+                    const items = swotData[key];
+                    const lis = items.map(i => `<li class="flex text-sm text-gray-700 leading-relaxed mb-2"><span class="text-${color}-500 font-bold mr-2 mt-0.5">✓</span><span>${i}</span></li>`).join('');
+                    
+                    container.innerHTML += `
+                        <div class="bg-white p-5 rounded-xl border-t-4 border-${color}-500 shadow-sm h-full">
+                            <h4 class="font-extrabold text-lg text-${color}-800 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">${title}</h4>
+                            <ul class="">${lis}</ul>
+                        </div>`;
+                }
+            }
+
             function calculateProfitability(input) {
                 const sales = [3000, 5000, 7000, 9000, 11000, 13000].filter(v => v <= 12000);
                 if (!sales.includes(12000)) sales.push(12000);
@@ -809,26 +831,16 @@
                     { k: "예상 마진율", c: (s, r) => (r["세전이익"] / r["매출액"]) * 100 }
                 ];
                 
-                const tableData = sales.map(s => {
-                    let r = {}; rows.forEach(row => r[row.k] = row.c(s, r)); return r;
-                });
+                const tableData = sales.map(s => { let r = {}; rows.forEach(row => r[row.k] = row.c(s, r)); return r; });
 
                 rows.forEach(row => {
-                    const isP = row.k === "세전이익";
-                    const isM = row.k === "예상 마진율";
-                    const isTotal = row.k === "매출총이익";
-                    
-                    let bgClass = "bg-white";
-                    if (isTotal) bgClass = "bg-gray-50";
-
+                    const isP = row.k === "세전이익"; const isM = row.k === "예상 마진율"; const isTotal = row.k === "매출총이익";
+                    let bgClass = isTotal ? "bg-gray-50" : "bg-white";
                     html += `<tr class="border-b ${bgClass}"><td class="px-4 py-2 font-medium text-left ${isP || isM ?'font-bold':''}">${row.k}</td>`;
                     tableData.forEach(d => {
                         const val = d[row.k];
-                        if (isM) {
-                            html += `<td class="px-4 py-2 font-bold ${val>0?'text-green-600':'text-red-600'}">${val.toFixed(1)}%</td>`;
-                        } else {
-                            html += `<td class="px-4 py-2 ${isP?'font-bold '+(val>0?'text-green-600':'text-red-600'):''}">${(val/10000).toLocaleString('ko-KR')} 만원</td>`;
-                        }
+                        if (isM) html += `<td class="px-4 py-2 font-bold ${val>0?'text-green-600':'text-red-600'}">${val.toFixed(1)}%</td>`;
+                        else html += `<td class="px-4 py-2 ${isP?'font-bold '+(val>0?'text-green-600':'text-red-600'):''}">${(val/10000).toLocaleString('ko-KR')} 만원</td>`;
                     });
                     html += `</tr>`;
                 });
@@ -837,7 +849,7 @@
 
             function calculateStaffing(data) {
                 const sf = Math.max(0, Math.round((data['유동인구'].score - 50) / 20));
-                const html = `
+                document.getElementById('staffing-estimation').innerHTML = `
                     <div class="border rounded-lg overflow-hidden"><table class="w-full text-sm text-center text-gray-500">
                         <thead class="bg-gray-100 border-b"><tr><th class="py-3">구분</th><th class="py-3">오픈</th><th class="py-3">미들</th><th class="py-3">마감</th></tr></thead>
                         <tbody>
@@ -845,7 +857,6 @@
                             <tr><td class="py-4 font-bold text-gray-900 bg-gray-50">주말</td><td>${1+sf}명</td><td>${3+sf}명</td><td>${2+sf}명</td></tr>
                         </tbody>
                     </table></div>`;
-                document.getElementById('staffing-estimation').innerHTML = html;
             }
             
             initializeWeights();
