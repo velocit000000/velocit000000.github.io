@@ -22,14 +22,12 @@
             .swot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; }
+        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; margin: 0 auto; }
         .gauge-background { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #e0e0e0 0%, #e0e0e0 100%); border-radius: 150px 150px 0 0; }
         .gauge-fill { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #4c51bf 0%, #667eea 100%); border-radius: 150px 150px 0 0; transform-origin: 50% 100%; transition: transform 1.5s ease-out; }
         .gauge-cover { position: absolute; width: 120px; height: 60px; background: #f7fafc; border-radius: 120px 120px 0 0; top: 15px; left: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .gauge-score { font-size: 2rem; font-weight: 700; color: #2d3748; }
         .gauge-label { font-size: 0.8rem; color: #718096; margin-top: -5px; }
-        /* 지도 크기를 키우고 반응형으로 설정 */
-        #map { width: 100%; height: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; position: relative; overflow: hidden; min-height: 350px; }
 
         .loader {
             border: 4px solid #f3f3f3;
@@ -68,13 +66,18 @@
                         <label for="area" class="block text-sm font-medium text-gray-700 mb-2">평수</label>
                         <input type="number" id="area" onchange="updateAreaButtons()" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="30">
                     </div>
-                    <div class="col-span-2">
+                    <div>
                         <label for="deposit" class="block text-sm font-medium text-gray-700 mb-2">보증금 (만원)</label>
                         <input type="number" id="deposit" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="10000">
                     </div>
-                    <div class="col-span-2">
+                    <div>
                         <label for="rent" class="block text-sm font-medium text-gray-700 mb-2">월 임대료 (만원)</label>
                         <input type="number" id="rent" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="700">
+                    </div>
+                    <!-- ROI 계산을 위해 직접 입력받는 예상 매출 필드 추가 -->
+                    <div class="col-span-2">
+                        <label for="expectedSales" class="block text-sm font-bold text-indigo-700 mb-2">예상 월 매출 (만원) <span class="text-xs text-indigo-400 font-normal">* ROI 계산 기준</span></label>
+                        <input type="number" id="expectedSales" class="w-full px-4 py-2 border border-indigo-300 rounded-lg bg-indigo-50 text-indigo-900 font-bold focus:ring-2 focus:ring-indigo-500" value="5000">
                     </div>
                 </div>
 
@@ -138,18 +141,21 @@
                     <h2 class="text-2xl font-semibold">종합 분석 결과: <span id="analyzed-address" class="text-indigo-600"></span></h2>
                 </div>
 
-                <!-- 1. 지도가 왼쪽 넓게, 적합도 게이지가 오른쪽 작게 배치 -->
+                <!-- 1. 왼쪽에 적합도 게이지, 오른쪽에 카카오맵 (사진 요청 레이아웃 100% 픽스) -->
                 <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
-                    <div id="map" class="w-full md:flex-1 border border-gray-200 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative">
-                        <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
-                    </div>
-                    <div class="gauge-container flex-shrink-0">
-                        <div class="gauge-background"></div>
-                        <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
-                        <div class="gauge-cover">
-                            <div id="total-score" class="gauge-score">0</div>
-                            <div class="gauge-label">총 적합도</div>
+                     <div class="w-full md:w-1/4 flex flex-col items-center justify-center bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-inner h-64 md:h-[350px]">
+                        <p class="text-sm font-bold text-gray-500 mb-4 text-center tracking-wide">AI 종합 산출<br>출점 적합도</p>
+                        <div class="gauge-container flex-shrink-0">
+                            <div class="gauge-background"></div>
+                            <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
+                            <div class="gauge-cover">
+                                <div id="total-score" class="gauge-score">0</div>
+                                <div class="gauge-label">SCORE</div>
+                            </div>
                         </div>
+                    </div>
+                    <div id="map" class="w-full md:w-3/4 h-64 md:h-[350px] border border-gray-300 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative shadow-sm">
+                        <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
                     </div>
                 </div>
 
@@ -158,16 +164,14 @@
                     <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- 2. 순수 투자금 기준 ROI (레이아웃 최적화 완료) -->
+                <!-- 2. 직접 입력한 예상 매출 기반의 순수 투자금 ROI -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
                         초기 창업 투자비 및 ROI 예측 
                         <span class="text-xs text-red-500 font-normal ml-2 bg-red-50 px-2 py-1 rounded">* 순수 실투자금 기준 (보증금 제외)</span>
                     </h3>
                     
-                    <!-- 3분할 그리드 사용: 2칸은 상세내역(넓게), 1칸은 ROI 파란박스(좁게) -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- 비용 상세 (넓은 칸, 2줄바꿈 방지) -->
                         <div class="lg:col-span-2 bg-gray-50 p-5 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-6">
                             <div class="w-full sm:w-1/3 h-40 flex justify-center">
                                 <canvas id="investmentChart"></canvas>
@@ -191,10 +195,9 @@
                             </div>
                         </div>
 
-                        <!-- 파란색 ROI 박스 (좁은 칸, 여백 최적화) -->
                         <div class="lg:col-span-1 bg-indigo-700 p-6 rounded-xl shadow-inner text-white flex flex-col justify-center relative overflow-hidden">
                             <h4 class="font-bold text-indigo-100 mb-2">순수 투자 원금 회수기간</h4>
-                            <p class="text-xs text-indigo-200 mb-6">예상 월 매출 <span id="target-sales" class="font-bold text-white text-sm"></span>만원 달성 시</p>
+                            <p class="text-xs text-indigo-200 mb-6">입력된 월 매출 <span id="target-sales" class="font-bold text-white text-sm"></span>만원 달성 시</p>
                             <div class="flex items-baseline gap-2 mb-4">
                                 <span class="text-5xl font-black text-white" id="roi-months">0</span>
                                 <span class="text-lg font-medium text-indigo-200">개월</span>
@@ -421,6 +424,7 @@
                     area: parseInt(document.getElementById('area').value),
                     deposit: parseInt(document.getElementById('deposit').value), 
                     rent: parseInt(document.getElementById('rent').value),
+                    expectedSales: parseInt(document.getElementById('expectedSales').value), // 사용자가 직접 입력한 월매출 반영
                     salesRatio: parseInt(elements.salesRatio.value),
                     locScore: parseInt(elements.locationType.value),
                     parkScore: parseInt(elements.parkingAvailability.value),
@@ -449,7 +453,7 @@
                     displayResults(analysisData);
                     displayDemographics(analysisData._meta);
                     
-                    // 추가 기능들 연동
+                    // 직접 입력한 예상 매출로 ROI 계산!
                     calculateInvestmentAndROI(userInput, analysisData);
                     displayTrafficChart(analysisData._meta);
                     displaySwot(analysisData, userInput);
@@ -644,7 +648,7 @@
                 return data;
             }
 
-            // ROI 계산 (보증금 제외 순수투자금 기준, 하단 수익표와 동일한 공식 적용)
+            // 직접 입력된 매출액(expectedSales)를 기준으로 ROI 계산하도록 수정
             function calculateInvestmentAndROI(input, data) {
                 const franchise = 1000; 
                 const education = 200;  
@@ -672,8 +676,8 @@
                     options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 10} } }, cutout: '60%' }
                 });
 
-                // 수익분석 표와 동일한 목표 매출 공식 및 지출 비율 적용
-                let expectedSales = (input.area * 180) + (data['유동인구'].score * 60); 
+                // 🔥 사용자가 직접 입력한 '예상 월 매출'을 가져와서 ROI 분석에 활용 🔥
+                let expectedSales = input.expectedSales; 
                 
                 const dRatio = (100 - input.salesRatio) / 100;
                 const rawMat = expectedSales * 0.35;
@@ -682,7 +686,7 @@
                 const other = (expectedSales * 0.16) + 280;
                 
                 let estimatedProfit = expectedSales - rawMat - delivery - rent - other; 
-                if (estimatedProfit <= 0) estimatedProfit = 100; 
+                if (estimatedProfit <= 0) estimatedProfit = 100; // 최저치 보정 (무한대 방지)
                 
                 let roiMonths = Math.round(pureInvest / estimatedProfit);
                 if(roiMonths > 60) roiMonths = 60; 
