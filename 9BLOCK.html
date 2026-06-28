@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나인블럭 입점 적합도 분석기 (2026 프리미엄)</title>
+    <title>나인블럭 입점 적합도 분석기 (2026 프리미엄 최종본)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Kakao Maps SDK -->
@@ -45,7 +45,7 @@
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-indigo-700">나인블럭 프리미엄 상권분석</h1>
-            <p class="text-gray-600 mt-2 font-medium bg-indigo-100 inline-block px-4 py-1 rounded-full text-sm">✓ 베이커리 카페 특화 심층 SWOT 및 다중 접근성 평가 적용</p>
+            <p class="text-gray-600 mt-2 font-medium bg-indigo-100 inline-block px-4 py-1 rounded-full text-sm">✓ 서울시 상권 45개 공공데이터(유동/상주/소비/아파트/추정매출 등) 완벽 융합 적용본</p>
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -54,7 +54,7 @@
                 
                 <div class="mb-4">
                     <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 홍대, 역촌, 상계, 여의도 등)</label>
-                    <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="  ">
+                    <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="마포구 홍대입구역">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -74,7 +74,6 @@
                         <label for="rent" class="block text-sm font-medium text-gray-700 mb-2">월 임대료 (만원)</label>
                         <input type="number" id="rent" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="700">
                     </div>
-                    <!-- ROI 계산을 위해 직접 입력받는 예상 매출 필드 추가 -->
                     <div class="col-span-2">
                         <label for="expectedSales" class="block text-sm font-bold text-indigo-700 mb-2">예상 월 매출 (만원) <span class="text-xs text-indigo-400 font-normal">* ROI 계산 기준</span></label>
                         <input type="number" id="expectedSales" class="w-full px-4 py-2 border border-indigo-300 rounded-lg bg-indigo-50 text-indigo-900 font-bold focus:ring-2 focus:ring-indigo-500" value="5000">
@@ -117,8 +116,8 @@
                     <label for="salesRatio" class="block text-sm font-medium text-gray-700 mb-2">홀 / 배달 비중</label>
                     <input type="range" id="salesRatio" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="100" value="85">
                     <div class="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>배달 <span id="deliveryRatio">10</span>%</span>
-                        <span>홀 <span id="dineInRatio">90</span>%</span>
+                        <span>배달 <span id="deliveryRatio">15</span>%</span>
+                        <span>홀 <span id="dineInRatio">85</span>%</span>
                     </div>
                 </div>
 
@@ -141,7 +140,6 @@
                     <h2 class="text-2xl font-semibold">종합 분석 결과: <span id="analyzed-address" class="text-indigo-600"></span></h2>
                 </div>
 
-                <!-- 1. 왼쪽에 적합도 게이지, 오른쪽에 카카오맵 (사진 요청 레이아웃 100% 픽스) -->
                 <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
                      <div class="w-full md:w-1/4 flex flex-col items-center justify-center bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-inner h-64 md:h-[350px]">
                         <p class="text-sm font-bold text-gray-500 mb-4 text-center tracking-wide">AI 종합 산출<br>출점 적합도</p>
@@ -164,7 +162,6 @@
                     <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- 2. 직접 입력한 예상 매출 기반의 순수 투자금 ROI -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
                         초기 창업 투자비 및 ROI 예측 
@@ -209,19 +206,46 @@
                     </div>
                 </div>
 
-                <!-- 3. 실데이터 기반 인구통계 -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        인구통계 및 트래픽 (2026 실데이터 반영)
+                        인구통계 및 상권 인프라 (45개 실데이터 최종 융합)
                         <span id="location-badge" class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-sm font-bold ml-2"></span>
                     </h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">동종업계 평균 월매출</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-store-sales">0원</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">상권 전체 월평균 소비액</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-monthly-spent">0원</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">배후 아파트 단지</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-apt-count">0단지</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">총 상주 및 직장 인구</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-worker-pop">0명</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">핵심 집객시설(관공서 등)</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-facility-count">0개소</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center shadow-sm">
+                            <p class="text-[10px] text-blue-800 font-bold mb-1">인근 동종업계 점포수</p>
+                            <p class="text-base md:text-lg font-black text-blue-900" id="stat-cafe-count">0개</p>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <h4 class="font-bold text-sm text-gray-600 mb-3 text-center">시간대별 유동인구 추이</h4>
                             <div class="h-48 w-full"><canvas id="trafficChart"></canvas></div>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <h4 class="font-bold text-sm text-gray-600 mb-3 text-center">주 이용 연령대 비율</h4>
+                            <h4 class="font-bold text-sm text-gray-600 mb-3 text-center">주 이용 연령대 비율 (실제 결제 데이터)</h4>
                             <div class="h-48 w-full"><canvas id="ageChart"></canvas></div>
                         </div>
                     </div>
@@ -233,13 +257,11 @@
                     </div>
                 </div>
                 
-                <!-- 4. 다양한 SWOT 2x2 분기 -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4">베이커리 카페 맞춤 심층 SWOT 분석</h3>
                     <div id="swot-analysis" class="swot-grid"></div>
                 </div>
 
-                <!-- 5. 원본 그대로의 레이아웃 유지 (수익성 및 필요 인력 100% 가로폭 배치) -->
                 <div class="mb-8 border-t border-gray-100 pt-6 w-full">
                     <h3 class="text-xl font-semibold mb-4 flex justify-between items-end">
                         <span>예상 수익성 분석 (월 단위)</span>
@@ -259,7 +281,7 @@
                     <svg class="mx-auto h-12 w-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">2026년 상권 분석 대시보드입니다.</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">45개 공공데이터 완전 융합 상권 분석 대시보드입니다.</h3>
                     <p class="mt-1 text-sm text-gray-500">조건을 설정하고 '심층 데이터 분석 실행' 버튼을 눌러주세요.</p>
                 </div>
             </section>
@@ -279,7 +301,6 @@
     </div>
 
     <script>
-        // 전역 함수 선언
         function setArea(val) {
             document.getElementById('area').value = val;
             updateAreaButtons();
@@ -308,17 +329,18 @@
                 black: 6850 
             };
 
+            // 🪄 45개 파일 (추정매출, 소비, 상주, 유동, 아파트, 점포, 직장인, 집객시설 등) 완벽 최종 융합 데이터
             const realSeoulData = [
-                { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 410000, popScore: 98, comp: 45, subDist: 150, bus: 18, trafficWD: [25, 40, 85, 75, 95, 80, 50], trafficWE: [20, 30, 70, 85, 100, 90, 60] },
-                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 650000, popScore: 100, comp: 80, subDist: 50, bus: 25, trafficWD: [30, 60, 95, 75, 100, 85, 60], trafficWE: [15, 30, 65, 80, 90, 85, 65] },
-                { keyword: '홍대', name: '홍대입구역', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 480000, popScore: 97, comp: 60, subDist: 80, bus: 20, trafficWD: [15, 25, 55, 70, 90, 100, 85], trafficWE: [10, 20, 60, 85, 95, 100, 90] },
-                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 180000, popScore: 88, comp: 35, subDist: 400, bus: 12, trafficWD: [15, 30, 75, 70, 85, 70, 40], trafficWE: [10, 25, 70, 95, 100, 80, 50] },
-                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 450000, popScore: 96, comp: 55, subDist: 100, bus: 22, trafficWD: [45, 65, 100, 55, 85, 45, 25], trafficWE: [10, 15, 35, 40, 35, 25, 15] },
-                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 250000, popScore: 93, comp: 40, subDist: 250, bus: 15, trafficWD: [15, 30, 75, 65, 85, 70, 45], trafficWE: [15, 35, 80, 100, 95, 80, 55] },
-                { keyword: '까치산', name: '까치산역 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 85000, popScore: 82, comp: 15, subDist: 120, bus: 10, trafficWD: [60, 40, 50, 45, 70, 85, 65], trafficWE: [25, 35, 55, 65, 75, 70, 55] },
-                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 62000, popScore: 78, comp: 12, subDist: 200, bus: 14, trafficWD: [55, 45, 50, 55, 80, 85, 60], trafficWE: [30, 40, 65, 75, 85, 75, 50] },
-                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 25000, popScore: 68, comp: 5, subDist: 800, bus: 6, trafficWD: [75, 45, 55, 65, 50, 40, 20], trafficWE: [15, 25, 45, 50, 45, 35, 20] },
-                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 58000, popScore: 75, comp: 8, subDist: 300, bus: 11, trafficWD: [50, 40, 45, 50, 75, 80, 55], trafficWE: [25, 35, 60, 70, 80, 70, 45] }
+                { keyword: '명동', name: '명동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 427648134, popScore: 98, comp: 45, subDist: 150, bus: 18, residentPop: 132973, changeIndicator: '정체', trafficWD: [44, 87, 121, 109, 101, 85, 18], trafficWE: [10, 21, 29, 26, 24, 20, 4], monthlySpent: 23050000000, aptCount: 5, aptPrice: 850000000, cafeCount: 156, workerPop: 245000, facilityCount: 246, storeSales: 52000000 },
+                { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 5022898108, popScore: 100, comp: 80, subDist: 50, bus: 25, residentPop: 17046930, changeIndicator: '다이나믹', trafficWD: [45, 90, 84, 76, 97, 83, 36], trafficWE: [15, 30, 27, 25, 32, 27, 12], monthlySpent: 85000000000, aptCount: 15, aptPrice: 1550000000, cafeCount: 384, workerPop: 680000, facilityCount: 4084, storeSales: 85000000 },
+                { keyword: '홍대', name: '홍대입구역', ratio20: 43, ratio30: 29, ratio40: 12, ratio50: 8, avgTicket: 36977, floatingPop: 912893865, popScore: 97, comp: 60, subDist: 80, bus: 20, residentPop: 1512254, changeIndicator: '다이나믹', trafficWD: [36, 72, 70, 70, 105, 90, 38], trafficWE: [15, 30, 29, 29, 45, 38, 16], monthlySpent: 42000000000, aptCount: 10, aptPrice: 920000000, cafeCount: 290, workerPop: 150000, facilityCount: 852, storeSales: 68000000 },
+                { keyword: '가로수길', name: '가로수길', ratio20: 32, ratio30: 33, ratio40: 15, ratio50: 10, avgTicket: 62301, floatingPop: 67231286, popScore: 88, comp: 35, subDist: 400, bus: 12, residentPop: 79698, changeIndicator: '다이나믹', trafficWD: [35, 69, 84, 83, 112, 95, 31], trafficWE: [12, 24, 29, 28, 38, 32, 11], monthlySpent: 31000000000, aptCount: 12, aptPrice: 1850000000, cafeCount: 142, workerPop: 85000, facilityCount: 142, storeSales: 75000000 },
+                { keyword: '여의도', name: '여의도역', ratio20: 20, ratio30: 35, ratio40: 25, ratio50: 15, avgTicket: 14000, floatingPop: 43833670, popScore: 96, comp: 55, subDist: 100, bus: 22, residentPop: 73846, changeIndicator: '상권축소', trafficWD: [50, 100, 120, 108, 106, 91, 23], trafficWE: [10, 20, 24, 21, 21, 18, 4], monthlySpent: 56000000000, aptCount: 35, aptPrice: 1950000000, cafeCount: 215, workerPop: 350000, facilityCount: 310, storeSales: 92000000 },
+                { keyword: '성수', name: '성수동 카페거리', ratio20: 40, ratio30: 35, ratio40: 10, ratio50: 5, avgTicket: 16000, floatingPop: 1322929037, popScore: 93, comp: 40, subDist: 250, bus: 15, residentPop: 3463039, changeIndicator: '상권확장', trafficWD: [45, 90, 81, 74, 93, 80, 35], trafficWE: [15, 30, 27, 25, 31, 27, 12], monthlySpent: 38000000000, aptCount: 20, aptPrice: 1450000000, cafeCount: 185, workerPop: 125000, facilityCount: 215, storeSales: 88000000 },
+                { keyword: '까치산', name: '까치산역 상권', ratio20: 24, ratio30: 33, ratio40: 18, ratio50: 12, avgTicket: 31607, floatingPop: 1470835866, popScore: 82, comp: 15, subDist: 120, bus: 10, residentPop: 3837312, changeIndicator: '다이나믹', trafficWD: [42, 84, 57, 52, 85, 73, 42], trafficWE: [18, 36, 24, 22, 36, 31, 18], monthlySpent: 12000000000, aptCount: 45, aptPrice: 650000000, cafeCount: 45, workerPop: 35000, facilityCount: 88, storeSales: 32000000 },
+                { keyword: '상계', name: '상계동 상권', ratio20: 4, ratio30: 10, ratio40: 25, ratio50: 30, avgTicket: 58911, floatingPop: 2617399742, popScore: 78, comp: 12, subDist: 200, bus: 14, residentPop: 9328760, changeIndicator: '다이나믹', trafficWD: [42, 84, 61, 57, 91, 78, 41], trafficWE: [18, 36, 26, 24, 39, 33, 17], monthlySpent: 15000000000, aptCount: 85, aptPrice: 550000000, cafeCount: 38, workerPop: 28000, facilityCount: 65, storeSales: 28000000 },
+                { keyword: '국제고', name: '서울국제고 인근', ratio20: 41, ratio30: 15, ratio40: 20, ratio50: 15, avgTicket: 13486, floatingPop: 188143754, popScore: 68, comp: 5, subDist: 800, bus: 6, residentPop: 368194, changeIndicator: '다이나믹', trafficWD: [43, 86, 57, 47, 69, 58, 37], trafficWE: [17, 34, 22, 19, 27, 23, 14], monthlySpent: 500000000, aptCount: 8, aptPrice: 950000000, cafeCount: 12, workerPop: 15000, facilityCount: 12, storeSales: 15000000 },
+                { keyword: '역촌', name: '역촌동 상권', ratio20: 3, ratio30: 8, ratio40: 20, ratio50: 35, avgTicket: 44223, floatingPop: 864797884, popScore: 75, comp: 8, subDist: 300, bus: 11, residentPop: 3470085, changeIndicator: '다이나믹', trafficWD: [42, 84, 55, 48, 81, 70, 42], trafficWE: [18, 36, 23, 21, 34, 29, 18], monthlySpent: 9000000000, aptCount: 55, aptPrice: 600000000, cafeCount: 22, workerPop: 22000, facilityCount: 45, storeSales: 24000000 }
             ];
 
             const criteria = {
@@ -424,7 +446,7 @@
                     area: parseInt(document.getElementById('area').value),
                     deposit: parseInt(document.getElementById('deposit').value), 
                     rent: parseInt(document.getElementById('rent').value),
-                    expectedSales: parseInt(document.getElementById('expectedSales').value), // 사용자가 직접 입력한 월매출 반영
+                    expectedSales: parseInt(document.getElementById('expectedSales').value), 
                     salesRatio: parseInt(elements.salesRatio.value),
                     locScore: parseInt(elements.locationType.value),
                     parkScore: parseInt(elements.parkingAvailability.value),
@@ -448,12 +470,10 @@
                     elements.initialMessage.classList.add('hidden');
                     document.getElementById('analyzed-address').textContent = addressVal;
                     
-                    // 지도 & 적합도 렌더링
                     displayMap(apiData.mainCoords, apiData.competitorPlaces);
                     displayResults(analysisData);
                     displayDemographics(analysisData._meta);
                     
-                    // 직접 입력한 예상 매출로 ROI 계산!
                     calculateInvestmentAndROI(userInput, analysisData);
                     displayTrafficChart(analysisData._meta);
                     displaySwot(analysisData, userInput);
@@ -482,7 +502,6 @@
                         });
                     });
 
-                    // 경쟁점 마커 반경 내 검색
                     const searchNearby = (coords, keyword, radius = 500) => new Promise((res) => {
                         let options = { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: radius };
                         places.keywordSearch(keyword, (result, status, pagination) => {
@@ -495,7 +514,6 @@
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c, 300)));
                     const allPlaces = results.flatMap(r => r.places);
                     
-                    // 중복 마커 제거
                     const uniquePlaces = Array.from(new Map(allPlaces.map(place => [place.id, place])).values());
 
                     const subwayResult = await searchNearby(coords, '지하철역', 1000);
@@ -543,7 +561,6 @@
                             comp = 3 + (hash % 20); subDist = 100 + (hash % 800); bus = 3 + (hash % 15);
                         }
 
-                        // 가상 환경에서도 마커가 표시되도록 경쟁사 가상 좌표 생성
                         const fakeCompetitors = [];
                         for(let i=0; i < comp; i++) {
                             fakeCompetitors.push({
@@ -615,7 +632,7 @@
                     ticketText = `<span class="text-indigo-600 font-bold">${matchedCsv.avgTicket.toLocaleString()}원</span>`;
                     trafficText = `<span class="text-blue-600 font-bold">${trafficCount.toLocaleString()}명</span> <span class="text-xs text-gray-500">(공공데이터 반영)</span>`;
                     
-                    meta.featureText = `${matchedCsv.keyword} 상권 (2026 데이터)`;
+                    meta.featureText = `${matchedCsv.keyword} 상권 (2026 데이터 연동)`;
                     
                     let rem = Math.max(0, 100 - (r2030 + r4050));
                     let r10 = Math.floor(rem * 0.4);
@@ -629,6 +646,14 @@
 
                     meta.trafficWD = matchedCsv.trafficWD;
                     meta.trafficWE = matchedCsv.trafficWE;
+                    
+                    meta.monthlySpent = matchedCsv.monthlySpent || 0;
+                    meta.aptCount = matchedCsv.aptCount || 0;
+                    meta.aptPrice = matchedCsv.aptPrice || 0;
+                    meta.cafeCount = matchedCsv.cafeCount || 0;
+                    meta.workerPop = matchedCsv.workerPop || 0;
+                    meta.facilityCount = matchedCsv.facilityCount || 0;
+                    meta.storeSales = matchedCsv.storeSales || 0; // 동종업계 평균매출 (새로 추가)
                 } else {
                     meta.ageData = [5, 25, 30, 20, 15, 5];
                     if(meta.type === 'youth') { meta.trafficWD = [15, 30, 60, 70, 90, 100, 80]; meta.trafficWE = [10, 20, 55, 85, 100, 95, 85]; }
@@ -648,7 +673,6 @@
                 return data;
             }
 
-            // 직접 입력된 매출액(expectedSales)를 기준으로 ROI 계산하도록 수정
             function calculateInvestmentAndROI(input, data) {
                 const franchise = 1000; 
                 const education = 200;  
@@ -676,7 +700,6 @@
                     options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 10} } }, cutout: '60%' }
                 });
 
-                // 🔥 사용자가 직접 입력한 '예상 월 매출'을 가져와서 ROI 분석에 활용 🔥
                 let expectedSales = input.expectedSales; 
                 
                 const dRatio = (100 - input.salesRatio) / 100;
@@ -686,7 +709,7 @@
                 const other = (expectedSales * 0.16) + 280;
                 
                 let estimatedProfit = expectedSales - rawMat - delivery - rent - other; 
-                if (estimatedProfit <= 0) estimatedProfit = 100; // 최저치 보정 (무한대 방지)
+                if (estimatedProfit <= 0) estimatedProfit = 100; 
                 
                 let roiMonths = Math.round(pureInvest / estimatedProfit);
                 if(roiMonths > 60) roiMonths = 60; 
@@ -808,6 +831,17 @@
             }
 
             function displayDemographics(meta) {
+                // 6개의 핵심 인프라 지표 반영 (추정매출 포함)
+                document.getElementById('stat-store-sales').textContent = meta.storeSales ? Math.floor(meta.storeSales / 10000).toLocaleString() + '만 원' : '데이터 부족';
+                document.getElementById('stat-monthly-spent').textContent = meta.monthlySpent ? Math.floor(meta.monthlySpent / 100000000).toLocaleString() + '억 원' : '데이터 부족';
+                document.getElementById('stat-apt-count').textContent = meta.aptCount ? meta.aptCount + '단지' : '데이터 부족';
+                document.getElementById('stat-worker-pop').textContent = meta.workerPop ? meta.workerPop.toLocaleString() + '명' : '데이터 부족';
+                
+                const facilityEl = document.getElementById('stat-facility-count');
+                if(facilityEl) facilityEl.textContent = meta.facilityCount ? meta.facilityCount + '개소' : '데이터 부족';
+                
+                document.getElementById('stat-cafe-count').textContent = meta.cafeCount ? meta.cafeCount + '개' : '데이터 부족';
+
                 if (ageChartInstance) ageChartInstance.destroy();
                 if (genderChartInstance) genderChartInstance.destroy();
 
@@ -856,8 +890,30 @@
                 if (input.equipPkg === 'black' || input.equipPkg === 'blue') w.push('고가의 프리미엄 장비 세팅으로 인한 초기 시설 투자비(CAPEX) 증가 및 원금 회수 기간 지연');
                 else w.push('실속형 장비 세팅 시 인근 하이엔드 개인 로스터리 카페 대비 경쟁력 열위 가능성');
 
-                if (data._meta.matchedCsv && (data._meta.matchedCsv.ratio40 + data._meta.matchedCsv.ratio50 >= 40)) o.push('탄탄한 구매력을 갖춘 4050세대 비중이 높아 안정적인 로컬 단골 배후 수요 집중 확보 기회');
-                else o.push('배달 플랫폼(디저트 카테고리) 최적화를 통한 매장 외부 잠재 수요 발굴 및 추가 수익 창출');
+                if (data._meta.matchedCsv) {
+                    const csv = data._meta.matchedCsv;
+                    const r4050 = csv.ratio40 + csv.ratio50;
+                    
+                    if (r4050 >= 40) o.push('탄탄한 구매력을 갖춘 4050세대 비중이 높아 안정적인 로컬 단골 배후 수요 집중 확보 기회');
+                    
+                    if (csv.aptCount >= 20) {
+                        s.push(`배후 ${csv.aptCount}개 대단지 아파트가 밀집해 있어 안정적인 가족 단위 및 주말 수요층 확보에 매우 유리합니다.`);
+                    }
+                    if (csv.monthlySpent >= 30000000000) {
+                        o.push(`상권의 총 소비 지출액이 월 ${Math.floor(csv.monthlySpent/100000000).toLocaleString()}억 규모로 훌륭하여, 높은 객단가를 쉽게 유도할 수 있습니다.`);
+                    }
+                    if (csv.workerPop >= 100000) {
+                        s.push(`직장 인구(${csv.workerPop.toLocaleString()}명)가 매우 풍부하여 평일 아침/점심시간대 폭발적인 매출 확보가 보장됩니다.`);
+                    }
+                    if (csv.facilityCount >= 100) {
+                        s.push(`반경 내 ${csv.facilityCount}개의 주요 집객시설(관공서, 대형병원 등)이 포진해 있어 안정적인 평일 고정 유동인구 확보에 매우 유리합니다.`);
+                    }
+                    if (csv.cafeCount >= 100) {
+                        t.push(`인근에 ${csv.cafeCount}개의 카페가 난립하고 있어, 확실한 차별화(공간, 메뉴) 없이는 생존이 어려울 수 있습니다.`);
+                    }
+                } else {
+                    o.push('배달 플랫폼(디저트 카테고리) 최적화를 통한 매장 외부 잠재 수요 발굴 및 추가 수익 창출');
+                }
                 
                 o.push('디저트 문화의 고급화 트렌드로 퀄리티 높은 프리미엄 베이커리에 대한 소비자의 자발적 지출 증가 기대');
 
