@@ -22,13 +22,12 @@
             .swot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; }
+        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; margin: 0 auto; }
         .gauge-background { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #e0e0e0 0%, #e0e0e0 100%); border-radius: 150px 150px 0 0; }
         .gauge-fill { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #4c51bf 0%, #667eea 100%); border-radius: 150px 150px 0 0; transform-origin: 50% 100%; transition: transform 1.5s ease-out; }
-        .gauge-cover { position: absolute; width: 120px; height: 60px; background: #f7fafc; border-radius: 120px 120px 0 0; top: 15px; left: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .gauge-score { font-size: 2rem; font-weight: 700; color: #2d3748; }
-        .gauge-label { font-size: 0.8rem; color: #718096; margin-top: -5px; }
-        #map { width: 100%; height: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; position: relative; overflow: hidden; min-height: 250px; }
+        .gauge-cover { position: absolute; width: 120px; height: 60px; background: #f9fafb; border-radius: 120px 120px 0 0; top: 15px; left: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .gauge-score { font-size: 2.2rem; font-weight: 800; color: #1e3a8a; line-height: 1; }
+        .gauge-label { font-size: 0.75rem; color: #6b7280; font-weight: 600; margin-top: 2px; }
 
         .loader {
             border: 4px solid #f3f3f3;
@@ -43,7 +42,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div class="container mx-auto p-4 md:p-8 max-w-screen-2xl">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-indigo-700">나인블럭 프리미엄 상권분석</h1>
             <p class="text-gray-600 mt-2 font-medium bg-indigo-100 inline-block px-4 py-1 rounded-full text-sm">✓ 베이커리 카페 특화 심층 SWOT 및 다중 접근성 평가 적용</p>
@@ -58,22 +57,31 @@
                     <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="마포구 홍대입구역">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="floor" class="block text-sm font-medium text-gray-700 mb-2">층 수</label>
-                        <input type="number" id="floor" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="1">
+                <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <label class="block text-sm font-bold text-indigo-800 mb-2">매장 규모 선택 (평수)</label>
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <button type="button" onclick="setArea(15)" id="btn-area-15" class="py-2 text-sm font-bold rounded-lg border border-gray-300 bg-white text-gray-600 hover:border-indigo-500 transition">15평</button>
+                        <button type="button" onclick="setArea(30)" id="btn-area-30" class="py-2 text-sm font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition">30평</button>
+                        <button type="button" onclick="setArea(50)" id="btn-area-50" class="py-2 text-sm font-bold rounded-lg border border-gray-300 bg-white text-gray-600 hover:border-indigo-500 transition">50평</button>
                     </div>
-                    <div>
-                        <label for="area" class="block text-sm font-medium text-gray-700 mb-2">평수</label>
-                        <input type="number" id="area" onchange="updateAreaButtons()" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="30">
-                    </div>
-                    <div class="col-span-2">
-                        <label for="deposit" class="block text-sm font-medium text-gray-700 mb-2">보증금 (만원)</label>
-                        <input type="number" id="deposit" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="10000">
-                    </div>
-                    <div class="col-span-2">
-                        <label for="rent" class="block text-sm font-medium text-gray-700 mb-2">월 임대료 (만원)</label>
-                        <input type="number" id="rent" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="700">
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="floor" class="block text-xs font-medium text-gray-700 mb-1">층 수</label>
+                            <input type="number" id="floor" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="1">
+                        </div>
+                        <div>
+                            <label for="area" class="block text-xs font-medium text-gray-700 mb-1">평수 직접입력</label>
+                            <input type="number" id="area" onchange="updateAreaButtons()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="30">
+                        </div>
+                        <div class="col-span-2">
+                            <label for="deposit" class="block text-xs font-medium text-gray-700 mb-1">보증금 (만원)</label>
+                            <input type="number" id="deposit" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="10000">
+                        </div>
+                        <div class="col-span-2">
+                            <label for="rent" class="block text-xs font-medium text-gray-700 mb-1">월 임대료 (만원)</label>
+                            <input type="number" id="rent" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="700">
+                        </div>
                     </div>
                 </div>
 
@@ -137,19 +145,27 @@
                     <h2 class="text-2xl font-semibold">종합 분석 결과: <span id="analyzed-address" class="text-indigo-600"></span></h2>
                 </div>
 
-                <!-- 1. 왼쪽에 적합도 게이지, 오른쪽에 카카오맵 고정 -->
-                <div class="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
-                     <div class="gauge-container flex-shrink-0">
-                        <div class="gauge-background"></div>
-                        <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
-                        <div class="gauge-cover">
-                            <div id="total-score" class="gauge-score">0</div>
-                            <div class="gauge-label">총 적합도</div>
+                <!-- 1. [핵심수정] 왼쪽: 적합도 패널 / 오른쪽: 대형 카카오맵 -->
+                <div class="flex flex-col lg:flex-row items-stretch justify-between gap-6 mb-8">
+                    
+                    <!-- 왼쪽: 총 적합도 게이지 패널 -->
+                    <div class="w-full lg:w-1/4 flex flex-col items-center justify-center bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-inner">
+                        <h3 class="text-sm font-bold text-gray-500 mb-6 text-center tracking-wider">AI 종합 산출<br>출점 적합도</h3>
+                        <div class="gauge-container">
+                            <div class="gauge-background"></div>
+                            <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
+                            <div class="gauge-cover">
+                                <div id="total-score" class="gauge-score">0</div>
+                                <div class="gauge-label">SCORE</div>
+                            </div>
                         </div>
                     </div>
-                    <div id="map" class="w-full md:flex-1 h-64 md:h-[350px] border border-gray-200 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative">
+
+                    <!-- 오른쪽: 대형 카카오맵 (크게 표시 및 마커 포함) -->
+                    <div id="map" class="w-full lg:w-3/4 h-[400px] lg:h-[500px] border border-gray-300 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative shadow-md">
                         <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
                     </div>
+
                 </div>
 
                 <div class="mb-8">
@@ -161,7 +177,7 @@
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
                         초기 창업 투자비 및 ROI 예측 
-                        <span class="text-xs text-red-500 font-normal ml-2 bg-red-50 px-2 py-1 rounded">* 순수 실투자금 기준 (가맹/교육/장비/인테리어 합산, 보증금 제외)</span>
+                        <span class="text-xs text-red-500 font-normal ml-2 bg-red-50 px-2 py-1 rounded">* 순수 실투자금 기준 (보증금 제외)</span>
                     </h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-4">
@@ -534,9 +550,22 @@
                             comp = 3 + (hash % 20); subDist = 100 + (hash % 800); bus = 3 + (hash % 15);
                         }
 
+                        // 가상 환경에서도 마커가 표시되도록 경쟁사 가상 좌표 생성 로직 추가
+                        const fakeCompetitors = [];
+                        for(let i=0; i < comp; i++) {
+                            fakeCompetitors.push({
+                                place_name: '경쟁 상가 ' + (i+1),
+                                y: mockLat + (Math.random() - 0.5) * 0.006, 
+                                x: mockLng + (Math.random() - 0.5) * 0.006
+                            });
+                        }
+
                         resolve({
-                            mainCoords: { lat: mockLat, lng: mockLng }, totalCompetitors: comp,
-                            competitorPlaces: [], nearestSubwayDist: subDist, busStopCount: bus
+                            mainCoords: { lat: mockLat, lng: mockLng }, 
+                            totalCompetitors: comp,
+                            competitorPlaces: fakeCompetitors, 
+                            nearestSubwayDist: subDist, 
+                            busStopCount: bus
                         });
                     }, 400); 
                 });
@@ -626,7 +655,7 @@
                 return data;
             }
 
-            // ROI 계산은 하단 수익표와 동일한 공식 적용 (보증금 제외 순수투자금 기준)
+            // ROI 계산 (보증금 제외 순수투자금 기준, 하단 수익표와 동일한 공식 적용)
             function calculateInvestmentAndROI(input, data) {
                 const franchise = 1000; 
                 const education = 200;  
@@ -715,7 +744,7 @@
 
                 competitorPlaces.forEach(place => {
                     const marker = new kakao.maps.Marker({ map: mapInstance, position: new kakao.maps.LatLng(place.y, place.x) });
-                    const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;">${place.place_name}</div>` });
+                    const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;font-weight:bold;color:#1e3a8a;">${place.place_name}</div>` });
                     kakao.maps.event.addListener(marker, 'mouseover', () => infowindow.open(mapInstance, marker));
                     kakao.maps.event.addListener(marker, 'mouseout', () => infowindow.close());
                     markers.push(marker);
@@ -832,7 +861,7 @@
                 else if (input.area <= 15) w.push('협소한 홀 공간으로 인해 다인원 단체 고객 유치 및 체류형 고객 확보에 한계점 존재');
                 
                 if (input.equipPkg === 'black' || input.equipPkg === 'blue') w.push('고가의 프리미엄 장비 세팅으로 인한 초기 시설 투자비(CAPEX) 증가 및 원금 회수 기간 지연');
-                else w.push('실속형 장비 세팅 시 인근 하이엔드 개인 로스터리 카페 대비 스페셜티 품질 경쟁 열위 가능성');
+                else w.push('실속형 장비 세팅 시 인근 하이엔드 개인 로스터리 카페 대비 경쟁력 열위 가능성');
 
                 if (data._meta.matchedCsv && (data._meta.matchedCsv.ratio40 + data._meta.matchedCsv.ratio50 >= 40)) o.push('탄탄한 구매력을 갖춘 4050세대 비중이 높아 안정적인 로컬 단골 배후 수요 집중 확보 기회');
                 else o.push('배달 플랫폼(디저트 카테고리) 최적화를 통한 매장 외부 잠재 수요 발굴 및 추가 수익 창출');
