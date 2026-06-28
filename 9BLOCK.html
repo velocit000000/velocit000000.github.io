@@ -53,7 +53,7 @@
                 <h2 class="text-2xl font-semibold mb-4 border-b pb-2">분석 정보 입력</h2>
                 
                 <div class="mb-4">
-                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 서울 영등포구 여의도동)</label>
+                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">분석 대상 주소 (예: 서울 영등포구 신길로 214)</label>
                     <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 영등포구 신길로 214" value="서울 영등포구 신길로 214">
                 </div>
 
@@ -275,7 +275,7 @@
                             </div>
                         </div>
 
-                        <!-- 2-3: 상권 전문 스탯 요약 (객단가 추가 완료) -->
+                        <!-- 2-3: 상권 전문 스탯 요약 -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col justify-center shadow-sm">
                             <h4 class="font-bold text-sm text-gray-600 mb-4 text-center">상권 전문 스탯</h4>
                             <div class="grid grid-cols-2 gap-3 text-center h-full">
@@ -287,7 +287,7 @@
                                     <span class="text-[10px] text-gray-500 font-bold">평균 결제 객단가</span>
                                     <span class="text-sm md:text-base font-black text-purple-800 mt-1" id="detail-avg-ticket">0원</span>
                                 </div>
-                                <div class="bg-white border border-red-100 bg-red-50/30 rounded-lg flex flex-col justify-center p-2 shadow-sm" title="반경 500m 카카오맵 실시간 데이터">
+                                <div class="bg-white border border-red-100 bg-red-50/30 rounded-lg flex flex-col justify-center p-2 shadow-sm" title="반경 200m/500m 카카오맵 실시간 데이터">
                                     <span class="text-[10px] text-red-600 font-bold">동종 점포수(500m)</span>
                                     <span class="text-sm md:text-base font-black text-red-700 mt-1" id="detail-cafe">0개</span>
                                 </div>
@@ -372,7 +372,6 @@
                 black: 6850 
             };
 
-            // 핵심 10대 상권 팩트 데이터 배열
             const realSeoulData = [
                 { keyword: '명동', name: '명동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 154000, popScore: 98, residentPop: 13297, changeIndicator: '정체', trafficWD: [44, 87, 121, 109, 101, 85, 18], trafficWE: [10, 21, 29, 26, 24, 20, 4], monthlySpent: 23050000000, workerPop: 245000, storeSales: 45000000 },
                 { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 320000, popScore: 100, residentPop: 25000, changeIndicator: '다이나믹', trafficWD: [45, 90, 84, 76, 97, 83, 36], trafficWE: [15, 30, 27, 25, 32, 27, 12], monthlySpent: 85000000000, workerPop: 680000, storeSales: 68000000 },
@@ -513,7 +512,7 @@
                     elements.initialMessage.classList.add('hidden');
                     document.getElementById('analyzed-address').textContent = addressVal;
                     
-                    displayMap(apiData.mainCoords, apiData.competitorPlaces);
+                    displayMap(apiData.mainCoords, apiData.competitorPlaces200m);
                     displayResults(analysisData);
                     displayDemographics(analysisData._meta);
                     
@@ -537,26 +536,24 @@
             }
 
             async function analyzeAPI(address) {
-                // 실시간 카카오 API 중심 추적 
                 const isKakaoAvailable = window.kakao && window.kakao.maps && window.kakao.maps.services;
                 
                 try {
                     const geocoder = new kakao.maps.services.Geocoder();
                     const places = new kakao.maps.services.Places();
 
-                    // 검색된 실제 주소의 정확한 좌표 획득 (가장 중요)
+                    // 검색된 실제 주소의 정확한 좌표 획득 
                     const coords = await new Promise((res, rej) => {
                         geocoder.addressSearch(address, (result, status) => {
                             if (status === kakao.maps.services.Status.OK) {
                                 res({ lat: result[0].y, lng: result[0].x });
                             } else {
-                                // 주소 검색 실패시 에러 던짐
                                 rej(new Error('Address not found'));
                             }
                         });
                     });
 
-                    // 1. 카카오맵 카테고리 실시간 검색 (지하철: SW8 / 1km 이내)
+                    // 1. 카카오맵 카테고리 검색 (지하철: SW8 / 1km 이내)
                     const searchSubway = (coords) => new Promise((res) => {
                         places.categorySearch('SW8', (result, status) => {
                             if (status === kakao.maps.services.Status.OK && result.length > 0) res(parseInt(result[0].distance));
@@ -565,16 +562,42 @@
                     });
                     const nearestSubwayDist = await searchSubway(coords);
 
-                    // 2. 카카오맵 카테고리 실시간 검색 (카페 수: CE7 / 반경 500m)
-                    const searchCafes = (coords) => new Promise((res) => {
+                    // 2-1. 카카오맵 카테고리 검색 (통계용 카페 수: CE7 / 반경 500m)
+                    const searchCafesStats = (coords) => new Promise((res) => {
                         places.categorySearch('CE7', (result, status, pagination) => {
-                            if (status === kakao.maps.services.Status.OK) res({ count: pagination.totalCount, places: result });
-                            else res({ count: 0, places: [] });
+                            if (status === kakao.maps.services.Status.OK) res(pagination.totalCount);
+                            else res(0);
                         }, { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: 500 });
                     });
-                    const cafesData = await searchCafes(coords);
+                    const totalCompetitorsCount = await searchCafesStats(coords);
 
-                    // 3. 핵심 집객시설 카테고리 실시간 검색 (공공기관: PO3, 은행: BK9 / 반경 500m)
+                    // 2-2. 🔥 카카오맵 지도 표시용 (카페: CE7 / 반경 200m 거리순 전부 추출) 🔥
+                    const searchCafesMap = (coords) => new Promise((res) => {
+                        let allPlaces = [];
+                        const searchOptions = {
+                            location: new kakao.maps.LatLng(coords.lat, coords.lng),
+                            radius: 200, // 200m 이내 매장만
+                            sort: kakao.maps.services.SortBy.DISTANCE // 가장 가까운 순서로 강제 정렬
+                        };
+                        
+                        const placesCb = (result, status, pagination) => {
+                            if (status === kakao.maps.services.Status.OK) {
+                                allPlaces = allPlaces.concat(result);
+                                // 카카오 API 최대 허용(3페이지, 약 45개)까지 끝까지 긁어옴
+                                if (pagination.hasNextPage && allPlaces.length < 45) {
+                                    pagination.nextPage();
+                                } else {
+                                    res(allPlaces);
+                                }
+                            } else {
+                                res(allPlaces);
+                            }
+                        };
+                        places.categorySearch('CE7', placesCb, searchOptions);
+                    });
+                    const competitorPlaces200m = await searchCafesMap(coords);
+
+                    // 3. 핵심 집객시설 카테고리 검색 (공공기관: PO3, 은행: BK9 / 반경 500m)
                     const searchFacility = (code) => new Promise((res) => {
                         places.categorySearch(code, (result, status, pagination) => {
                             if (status === kakao.maps.services.Status.OK) res(pagination.totalCount);
@@ -583,7 +606,7 @@
                     });
                     const facilityCount = (await searchFacility('PO3')) + (await searchFacility('BK9'));
 
-                    // 4. 버스정류장 키워드 실시간 검색 (반경 500m)
+                    // 4. 버스정류장 키워드 검색 (반경 500m)
                     let busStopCount = await new Promise((res) => {
                         places.keywordSearch('버스정류장', (result, status, pagination) => {
                             if (status === kakao.maps.services.Status.OK) res(pagination.totalCount);
@@ -591,37 +614,49 @@
                         }, { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: 500 });
                     });
                     
-                    // 만약 API 할당량 문제로 0개가 뜰 경우 해당 좌표(위도/경도) 기반의 난수로 최소 1개 이상 생성하여 보정
                     if (busStopCount === 0) {
                         busStopCount = Math.max(1, Math.floor(Math.abs(coords.lat * 10000)) % 15 + 4);
                     }
 
-                    // 🚨 핵심: 입력된 주소의 실시간 반경 데이터를 리턴 
                     return {
                         mainCoords: coords, 
-                        totalCompetitors: cafesData.count, 
-                        competitorPlaces: cafesData.places.slice(0, 10), 
+                        totalCompetitors: totalCompetitorsCount, // 스탯 반영용(500m)
+                        competitorPlaces200m: competitorPlaces200m, // 지도 렌더링용(200m 전부)
                         nearestSubwayDist: nearestSubwayDist, 
                         busStopCount: busStopCount, 
                         facilityCount: facilityCount 
                     };
                 } catch (e) {
                     console.warn("Kakao API 요청 실패, 스케일링 데이터로 우회", e);
-                    // 카카오 API 완전 차단시 주소 해시값을 기반으로 유사 데이터 생성
-                    const hash = simpleHash(address);
-                    // 서울 중심부 기준 약간의 변동을 준 가상 좌표
-                    let mockLat = 37.5665 + (hash % 100) * 0.0001; 
-                    let mockLng = 126.9780 + (hash % 100) * 0.0001; 
-                    
-                    return {
-                        mainCoords: { lat: mockLat, lng: mockLng }, 
-                        totalCompetitors: 10 + (hash % 30),
-                        competitorPlaces: [], 
-                        nearestSubwayDist: 300 + (hash % 500), 
-                        busStopCount: 15 + (hash % 10),
-                        facilityCount: 5 + (hash % 15)
-                    };
+                    return generateMockData(address);
                 }
+            }
+
+            function generateMockData(address) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const hash = simpleHash(address);
+                        let mockLat = 37.5665 + (hash % 100) * 0.0001; 
+                        let mockLng = 126.9780 + (hash % 100) * 0.0001; 
+
+                        const fakeCompetitors = [];
+                        for(let i=0; i < 15; i++) {
+                            fakeCompetitors.push({
+                                place_name: '경쟁 카페 ' + (i+1),
+                                y: mockLat + (Math.random() - 0.5) * 0.003, // 200m 반경 오차
+                                x: mockLng + (Math.random() - 0.5) * 0.003
+                            });
+                        }
+                        resolve({
+                            mainCoords: { lat: mockLat, lng: mockLng }, 
+                            totalCompetitors: 10 + (hash % 30),
+                            competitorPlaces200m: fakeCompetitors, 
+                            nearestSubwayDist: 300 + (hash % 500), 
+                            busStopCount: 15 + (hash % 10),
+                            facilityCount: 5 + (hash % 15)
+                        });
+                    }, 400); 
+                });
             }
 
             function generateAnalysisData(userInput, apiData, address) {
@@ -645,7 +680,6 @@
                 
                 let meta = { swotData: {}, matchedCsv: null, ageData: [], genderData: [50, 50], featureText: "", profile: "" };
 
-                // 🔥 1. 주소 텍스트 기반 스마트 상권 프로파일링 (강남 등 다른 지역 데이터 덮어쓰기 완전 해결) 🔥
                 let profile = 'general';
                 if (/여의도|강남|테헤란|서초|종로|중구|송파|구로|을지로|광화문/.test(address)) profile = 'office';
                 else if (/마포|홍대|성동|건대|신촌|이태원/.test(address)) profile = 'youth';
@@ -655,11 +689,9 @@
                 let trafficWD, trafficWE;
                 let r2030, r4050, floatingPop;
 
-                // 10대 핵심 상권 키워드가 주소에 "정확히 일치"할 때만 매칭
                 let exactMatch = realSeoulData.find(d => address.includes(d.keyword));
 
                 if (exactMatch) {
-                    // 핵심 상권 일치 시 100% 픽스된 공공데이터 적용 (예: 여의도)
                     meta.matchedCsv = exactMatch;
                     r2030 = exactMatch.ratio20 + exactMatch.ratio30;
                     r4050 = exactMatch.ratio40 + exactMatch.ratio50;
@@ -687,13 +719,12 @@
                     meta.storeSales = exactMatch.storeSales; 
                     meta.profile = profile;
                 } else {
-                    // 🔥 일반 주소(예: 신길로 214)인 경우, 오피스/주거 등 프로필에 맞춰 현실적으로 스케일링 🔥
                     if (profile === 'office') {
                         workerPop = 150000 + (hash % 100000); 
-                        residentPop = 20000 + (hash % 15000); // 오피스는 상주(거주)인구 적음
+                        residentPop = 20000 + (hash % 15000); 
                         monthlySpent = 60000000000 + (hash % 30000000000); 
-                        trafficWD = [40, 120, 380, 110, 160, 80, 30]; // 평일 점심시간 트래픽 폭발
-                        trafficWE = [10, 15, 30, 25, 20, 15, 5]; // 주말 급감
+                        trafficWD = [40, 120, 380, 110, 160, 80, 30]; 
+                        trafficWE = [10, 15, 30, 25, 20, 15, 5]; 
                         r2030 = 45 + (hash % 15); r4050 = 35 + (hash % 15);
                         avgTicket = 15000 + (hash % 5000);
                         floatingPop = 200000 + (hash % 150000);
@@ -702,16 +733,16 @@
                         residentPop = 30000 + (hash % 20000);
                         monthlySpent = 50000000000 + (hash % 20000000000);
                         trafficWD = [20, 40, 90, 110, 180, 220, 150]; 
-                        trafficWE = [15, 40, 150, 180, 250, 280, 200]; // 주말/저녁 피크
+                        trafficWE = [15, 40, 150, 180, 250, 280, 200]; 
                         r2030 = 65 + (hash % 15); r4050 = 15 + (hash % 10);
                         avgTicket = 18000 + (hash % 10000);
                         floatingPop = 150000 + (hash % 100000);
                     } else if (profile === 'residential') {
-                        workerPop = 2000 + (hash % 8000); // 주거지: 직장인 매우 적음
-                        residentPop = 50000 + (hash % 40000); // 주거지: 실거주민 매우 많음
+                        workerPop = 2000 + (hash % 8000); 
+                        residentPop = 50000 + (hash % 40000); 
                         monthlySpent = 15000000000 + (hash % 10000000000); 
-                        trafficWD = [150, 90, 80, 90, 140, 110, 60]; // 출퇴근 피크
-                        trafficWE = [60, 90, 130, 140, 150, 120, 80]; // 주말 안정적 트래픽
+                        trafficWD = [150, 90, 80, 90, 140, 110, 60]; 
+                        trafficWE = [60, 90, 130, 140, 150, 120, 80]; 
                         r2030 = 25 + (hash % 15); r4050 = 50 + (hash % 15);
                         avgTicket = 13000 + (hash % 4000);
                         floatingPop = 40000 + (hash % 30000);
@@ -748,7 +779,6 @@
                     meta.residentPop = residentPop; 
                     meta.storeSales = 18000000 + (hash % 20000000); 
 
-                    // 🚨 카카오 실시간 데이터 최우선 적용 🚨
                     meta.cafeCount = apiData.totalCompetitors > 0 ? apiData.totalCompetitors : 10 + (hash % 20); 
                     meta.facilityCount = apiData.facilityCount > 0 ? apiData.facilityCount : 2 + (hash % 10); 
                     meta.matchedCsv = null; 
@@ -825,18 +855,21 @@
                 setTimeout(() => { roiBar.style.width = `${Math.min(100, (roiMonths / 36) * 100)}%`; }, 100);
             }
 
+            // 🚨 지도의 줌 레벨을 4에서 3으로 변경하여 200m 마커들이 훨씬 잘 보이게 최적화 🚨
             function displayMap(mainCoords, competitorPlaces) {
                 if (!window.kakao || !window.kakao.maps || !window.kakao.maps.Map) {
                     elements.map.innerHTML = '<div class="text-center text-gray-500 flex flex-col items-center p-6 h-full justify-center bg-gray-100 rounded-lg"><svg class="w-12 h-12 mb-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m22 4v-4m-22-4h22M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg><p class="text-sm font-bold text-gray-600 mb-2">카카오맵을 불러올 수 없는 환경입니다.</p><p class="text-xs text-gray-400">도메인이 카카오 디벨로퍼스에 등록되지 않았거나, 인터넷 연결을 확인해주세요.<br/>(임시로 가상 데이터를 통한 분석이 완료되었습니다.)</p></div>';
                     return;
                 }
                 
-                const mapOption = { center: new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng), level: 4 };
+                // 중심축 설정 및 level 3 (더 좁은 반경/확대) 적용
+                const mapOption = { center: new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng), level: 3 };
 
                 if (!mapInstance) {
                     mapInstance = new kakao.maps.Map(elements.map, mapOption);
                 } else {
                     mapInstance.setCenter(new kakao.maps.LatLng(mainCoords.lat, mainCoords.lng));
+                    mapInstance.setLevel(3); // 검색할 때마다 무조건 레벨 3으로 고정
                 }
 
                 markers.forEach(marker => marker.setMap(null));
@@ -850,7 +883,7 @@
                 mainMarker.setMap(mapInstance);
                 markers.push(mainMarker);
 
-                // 경쟁사 카카오맵 실시간 마커
+                // 경쟁사 카카오맵 실시간 마커 (제한 없이 전부 표시됨)
                 competitorPlaces.forEach(place => {
                     const marker = new kakao.maps.Marker({ map: mapInstance, position: new kakao.maps.LatLng(place.y, place.x) });
                     const infowindow = new kakao.maps.InfoWindow({ content: `<div style="padding:5px;font-size:12px;font-weight:bold;color:#1e3a8a;">${place.place_name}</div>` });
@@ -924,17 +957,14 @@
             }
 
             function displayDemographics(meta) {
-                // 상단 스탯 영역: 기업체 수 제거 -> 평균 결제 객단가로 교체
                 document.getElementById('detail-spent').textContent = meta.monthlySpent ? Math.floor(meta.monthlySpent / 100000000).toLocaleString() + '억 원' : '데이터 부족';
                 document.getElementById('detail-avg-ticket').textContent = meta.avgTicket ? meta.avgTicket.toLocaleString() + '원' : '데이터 부족';
                 document.getElementById('detail-cafe').textContent = meta.cafeCount ? meta.cafeCount + '개' : '0개';
                 document.getElementById('detail-facility').textContent = meta.facilityCount ? meta.facilityCount + '곳' : '0곳';
                 
-                // 오피스 vs 배후거주 인구
                 document.getElementById('detail-resident').textContent = meta.residentPop ? meta.residentPop.toLocaleString() + '명' : '데이터 부족';
                 document.getElementById('detail-worker').textContent = meta.workerPop ? meta.workerPop.toLocaleString() + '명' : '데이터 부족';
 
-                // 차트 렌더링
                 if (ageChartInstance) ageChartInstance.destroy();
                 if (genderChartInstance) genderChartInstance.destroy();
 
@@ -967,7 +997,6 @@
                     options: { maintainAspectRatio: false, cutout: '60%', layout: { padding: { top: 0, bottom: 0 } }, plugins: { legend: { display: false } } }
                 });
 
-                // 🔥 성별 차트 3등분 빈공간 활용 로직 (가독성 향상) 🔥
                 let mainGender = meta.genderData[0] > meta.genderData[1] ? "남성" : "여성";
                 let maxAgeIdx = meta.ageData.indexOf(Math.max(...meta.ageData));
                 let ageLabels = ['10대', '20대', '30대', '40대', '50대', '60대+'];
@@ -985,7 +1014,6 @@
                     insightEl.className = "text-[11px] font-bold text-pink-800";
                 }
 
-                // 게이지 바 퍼센트 동적 계산 (오피스와 주거 상권 프로필에 맞춘 스케일링)
                 let resMax = meta.profile === 'residential' ? 150000 : 50000;
                 let workMax = meta.profile === 'office' ? 500000 : 30000;
 
@@ -1020,7 +1048,6 @@
                 if (input.equipPkg === 'black' || input.equipPkg === 'blue') w.push('고가의 프리미엄 장비 세팅으로 인한 초기 시설 투자비(CAPEX) 증가 및 원금 회수 기간 지연');
                 else w.push('실속형 장비 세팅 시 인근 하이엔드 개인 로스터리 카페 대비 경쟁력 열위 가능성');
 
-                // 스케일링 프로필에 맞춘 전문 SWOT 분석 멘트 제공
                 if (data._meta.profile === 'office') {
                     s.push(`오피스 직장인구(${data._meta.workerPop.toLocaleString()}명)가 풍부하여 평일 점심시간대 안정적 매출 확보에 매우 유리합니다.`);
                     w.push(`주말 및 공휴일에 오피스 출근자 이탈로 인한 매출 급감이 발생할 수 있습니다.`);
