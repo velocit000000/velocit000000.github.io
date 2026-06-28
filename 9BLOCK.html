@@ -22,12 +22,14 @@
             .swot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; margin: 0 auto; }
+        .gauge-container { position: relative; width: 150px; height: 75px; overflow: hidden; }
         .gauge-background { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #e0e0e0 0%, #e0e0e0 100%); border-radius: 150px 150px 0 0; }
         .gauge-fill { position: absolute; width: 100%; height: 100%; background: conic-gradient(from -90deg at 50% 100%, #4c51bf 0%, #667eea 100%); border-radius: 150px 150px 0 0; transform-origin: 50% 100%; transition: transform 1.5s ease-out; }
-        .gauge-cover { position: absolute; width: 120px; height: 60px; background: #f9fafb; border-radius: 120px 120px 0 0; top: 15px; left: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .gauge-score { font-size: 2.2rem; font-weight: 800; color: #1e3a8a; line-height: 1; }
-        .gauge-label { font-size: 0.75rem; color: #6b7280; font-weight: 600; margin-top: 2px; }
+        .gauge-cover { position: absolute; width: 120px; height: 60px; background: #f7fafc; border-radius: 120px 120px 0 0; top: 15px; left: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .gauge-score { font-size: 2rem; font-weight: 700; color: #2d3748; }
+        .gauge-label { font-size: 0.8rem; color: #718096; margin-top: -5px; }
+        /* 지도 크기를 키우고 반응형으로 설정 */
+        #map { width: 100%; height: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; position: relative; overflow: hidden; min-height: 350px; }
 
         .loader {
             border: 4px solid #f3f3f3;
@@ -42,7 +44,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-screen-2xl">
+    <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-indigo-700">나인블럭 프리미엄 상권분석</h1>
             <p class="text-gray-600 mt-2 font-medium bg-indigo-100 inline-block px-4 py-1 rounded-full text-sm">✓ 베이커리 카페 특화 심층 SWOT 및 다중 접근성 평가 적용</p>
@@ -57,31 +59,22 @@
                     <input type="text" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" placeholder="예: 서울 마포구 홍대입구" value="마포구 홍대입구역">
                 </div>
 
-                <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <label class="block text-sm font-bold text-indigo-800 mb-2">매장 규모 선택 (평수)</label>
-                    <div class="grid grid-cols-3 gap-2 mb-3">
-                        <button type="button" onclick="setArea(15)" id="btn-area-15" class="py-2 text-sm font-bold rounded-lg border border-gray-300 bg-white text-gray-600 hover:border-indigo-500 transition">15평</button>
-                        <button type="button" onclick="setArea(30)" id="btn-area-30" class="py-2 text-sm font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition">30평</button>
-                        <button type="button" onclick="setArea(50)" id="btn-area-50" class="py-2 text-sm font-bold rounded-lg border border-gray-300 bg-white text-gray-600 hover:border-indigo-500 transition">50평</button>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="floor" class="block text-sm font-medium text-gray-700 mb-2">층 수</label>
+                        <input type="number" id="floor" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="1">
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="floor" class="block text-xs font-medium text-gray-700 mb-1">층 수</label>
-                            <input type="number" id="floor" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="1">
-                        </div>
-                        <div>
-                            <label for="area" class="block text-xs font-medium text-gray-700 mb-1">평수 직접입력</label>
-                            <input type="number" id="area" onchange="updateAreaButtons()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="30">
-                        </div>
-                        <div class="col-span-2">
-                            <label for="deposit" class="block text-xs font-medium text-gray-700 mb-1">보증금 (만원)</label>
-                            <input type="number" id="deposit" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="10000">
-                        </div>
-                        <div class="col-span-2">
-                            <label for="rent" class="block text-xs font-medium text-gray-700 mb-1">월 임대료 (만원)</label>
-                            <input type="number" id="rent" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" value="700">
-                        </div>
+                    <div>
+                        <label for="area" class="block text-sm font-medium text-gray-700 mb-2">평수</label>
+                        <input type="number" id="area" onchange="updateAreaButtons()" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="30">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="deposit" class="block text-sm font-medium text-gray-700 mb-2">보증금 (만원)</label>
+                        <input type="number" id="deposit" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="10000">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="rent" class="block text-sm font-medium text-gray-700 mb-2">월 임대료 (만원)</label>
+                        <input type="number" id="rent" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="700">
                     </div>
                 </div>
 
@@ -145,27 +138,19 @@
                     <h2 class="text-2xl font-semibold">종합 분석 결과: <span id="analyzed-address" class="text-indigo-600"></span></h2>
                 </div>
 
-                <!-- 1. [핵심수정] 왼쪽: 적합도 패널 / 오른쪽: 대형 카카오맵 -->
-                <div class="flex flex-col lg:flex-row items-stretch justify-between gap-6 mb-8">
-                    
-                    <!-- 왼쪽: 총 적합도 게이지 패널 -->
-                    <div class="w-full lg:w-1/4 flex flex-col items-center justify-center bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-inner">
-                        <h3 class="text-sm font-bold text-gray-500 mb-6 text-center tracking-wider">AI 종합 산출<br>출점 적합도</h3>
-                        <div class="gauge-container">
-                            <div class="gauge-background"></div>
-                            <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
-                            <div class="gauge-cover">
-                                <div id="total-score" class="gauge-score">0</div>
-                                <div class="gauge-label">SCORE</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 오른쪽: 대형 카카오맵 (크게 표시 및 마커 포함) -->
-                    <div id="map" class="w-full lg:w-3/4 h-[400px] lg:h-[500px] border border-gray-300 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative shadow-md">
+                <!-- 1. 지도가 왼쪽 넓게, 적합도 게이지가 오른쪽 작게 배치 -->
+                <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+                    <div id="map" class="w-full md:flex-1 border border-gray-200 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center relative">
                         <p class="text-gray-500 text-sm">지도를 불러오는 중입니다...</p>
                     </div>
-
+                    <div class="gauge-container flex-shrink-0">
+                        <div class="gauge-background"></div>
+                        <div id="gauge-fill" class="gauge-fill" style="transform: rotate(0deg);"></div>
+                        <div class="gauge-cover">
+                            <div id="total-score" class="gauge-score">0</div>
+                            <div class="gauge-label">총 적합도</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mb-8">
@@ -491,9 +476,9 @@
                         });
                     });
 
-                    const searchNearby = (coords, keyword, radius = 500, useDistanceSort = false) => new Promise((res) => {
+                    // 경쟁점 마커 누락 버그 해결 (location 옵션과 useMapBounds 제거하여 반경 내 강제 검색)
+                    const searchNearby = (coords, keyword, radius = 500) => new Promise((res) => {
                         let options = { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: radius };
-                        if (useDistanceSort) options.sort = kakao.maps.services.SortBy.DISTANCE; 
                         places.keywordSearch(keyword, (result, status, pagination) => {
                             if (status === kakao.maps.services.Status.OK) res({ count: pagination.totalCount, places: result });
                             else res({ count: 0, places: [] });
@@ -503,9 +488,11 @@
                     const competitors = ['스타벅스', '투썸플레이스', '할리스', '커피빈', '폴바셋', '아티제', '테라로사', '커피'];
                     const results = await Promise.all(competitors.map(c => searchNearby(coords, c, 300)));
                     const allPlaces = results.flatMap(r => r.places);
+                    
+                    // 중복 마커 제거
                     const uniquePlaces = Array.from(new Map(allPlaces.map(place => [place.id, place])).values());
 
-                    const subwayResult = await searchNearby(coords, '지하철역', 1000, true);
+                    const subwayResult = await searchNearby(coords, '지하철역', 1000);
                     const nearestSubwayDist = subwayResult.places.length > 0 ? parseInt(subwayResult.places[0].distance) : 2000;
 
                     const busStopResult = await searchNearby(coords, '버스정류장', 300);
@@ -550,11 +537,11 @@
                             comp = 3 + (hash % 20); subDist = 100 + (hash % 800); bus = 3 + (hash % 15);
                         }
 
-                        // 가상 환경에서도 마커가 표시되도록 경쟁사 가상 좌표 생성 로직 추가
+                        // 가상 환경에서도 마커가 표시되도록 경쟁사 가상 좌표 생성
                         const fakeCompetitors = [];
                         for(let i=0; i < comp; i++) {
                             fakeCompetitors.push({
-                                place_name: '경쟁 상가 ' + (i+1),
+                                place_name: '경쟁 카페 ' + (i+1),
                                 y: mockLat + (Math.random() - 0.5) * 0.006, 
                                 x: mockLng + (Math.random() - 0.5) * 0.006
                             });
