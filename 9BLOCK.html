@@ -158,40 +158,44 @@
                     <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- 2. 순수 투자금 기준 ROI (가맹비, 교육비, 인테리어, 장비 포함 / 보증금 제외) -->
+                <!-- 2. 순수 투자금 기준 ROI (레이아웃 최적화 완료) -->
                 <div class="mb-8 border-t border-gray-100 pt-6">
                     <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
                         초기 창업 투자비 및 ROI 예측 
                         <span class="text-xs text-red-500 font-normal ml-2 bg-red-50 px-2 py-1 rounded">* 순수 실투자금 기준 (보증금 제외)</span>
                     </h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-4">
-                            <div class="w-full sm:w-1/2 h-40">
+                    
+                    <!-- 3분할 그리드 사용: 2칸은 상세내역(넓게), 1칸은 ROI 파란박스(좁게) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 비용 상세 (넓은 칸, 2줄바꿈 방지) -->
+                        <div class="lg:col-span-2 bg-gray-50 p-5 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-6">
+                            <div class="w-full sm:w-1/3 h-40 flex justify-center">
                                 <canvas id="investmentChart"></canvas>
                             </div>
-                            <div class="w-full sm:w-1/2 space-y-2 text-sm text-gray-700">
-                                <div class="flex justify-between text-xs text-gray-400 pb-1 border-b border-gray-200">
-                                    <span>점포 보증금 (회수자산)</span><span><span id="inv-deposit"></span> 만원</span>
+                            <div class="w-full sm:w-2/3 space-y-3 text-sm text-gray-700 px-2">
+                                <div class="flex justify-between items-center text-xs text-gray-400 pb-2 border-b border-gray-200">
+                                    <span class="whitespace-nowrap">점포 보증금 (회수자산)</span><span class="whitespace-nowrap"><span id="inv-deposit"></span> 만원</span>
                                 </div>
-                                <div class="flex justify-between font-bold text-indigo-700 mt-2">
-                                    <span>가맹/교육비</span><span>1,200 만원</span>
+                                <div class="flex justify-between items-center font-bold text-indigo-700 mt-2">
+                                    <span class="whitespace-nowrap">가맹/교육비</span><span class="whitespace-nowrap">1,200 만원</span>
                                 </div>
-                                <div class="flex justify-between font-bold text-indigo-700">
-                                    <span>인테리어(<span id="inv-area"></span>평)</span><span><span id="inv-interior"></span> 만원</span>
+                                <div class="flex justify-between items-center font-bold text-indigo-700">
+                                    <span class="whitespace-nowrap">인테리어(<span id="inv-area"></span>평)</span><span class="whitespace-nowrap"><span id="inv-interior"></span> 만원</span>
                                 </div>
-                                <div class="flex justify-between font-bold text-indigo-700">
-                                    <span>장비(<span id="inv-pkg"></span>)</span><span><span id="inv-equip"></span> 만원</span>
+                                <div class="flex justify-between items-center font-bold text-indigo-700">
+                                    <span class="whitespace-nowrap">장비(<span id="inv-pkg"></span>)</span><span class="whitespace-nowrap"><span id="inv-equip"></span> 만원</span>
                                 </div>
-                                <div class="border-t border-gray-300 pt-2 mt-2 flex justify-between font-bold text-gray-900">
-                                    <span>순수 투자 비용합계</span><span class="text-lg text-red-600"><span id="inv-pure-total"></span> 만원</span>
+                                <div class="border-t border-gray-300 pt-3 mt-3 flex justify-between items-center font-black text-gray-900">
+                                    <span class="whitespace-nowrap text-base">순수 투자 비용합계</span><span class="text-xl text-red-600 whitespace-nowrap"><span id="inv-pure-total"></span> 만원</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-indigo-700 p-6 rounded-xl shadow-inner text-white flex flex-col justify-center relative overflow-hidden">
-                            <h4 class="font-bold text-indigo-100 mb-1">순수 투자 원금 회수 기간 (ROI) 예측</h4>
-                            <p class="text-xs text-indigo-200 mb-4">예상 월 매출 <span id="target-sales" class="font-bold text-white"></span>만원 달성 시</p>
-                            <div class="flex items-baseline gap-2 mb-3">
+                        <!-- 파란색 ROI 박스 (좁은 칸, 여백 최적화) -->
+                        <div class="lg:col-span-1 bg-indigo-700 p-6 rounded-xl shadow-inner text-white flex flex-col justify-center relative overflow-hidden">
+                            <h4 class="font-bold text-indigo-100 mb-2">순수 투자 원금 회수기간</h4>
+                            <p class="text-xs text-indigo-200 mb-6">예상 월 매출 <span id="target-sales" class="font-bold text-white text-sm"></span>만원 달성 시</p>
+                            <div class="flex items-baseline gap-2 mb-4">
                                 <span class="text-5xl font-black text-white" id="roi-months">0</span>
                                 <span class="text-lg font-medium text-indigo-200">개월</span>
                             </div>
@@ -272,7 +276,7 @@
     </div>
 
     <script>
-        // 에러 수정: 전역 함수로 분리하여 HTML onClick 에서 접근 가능하게 변경
+        // 전역 함수 선언
         function setArea(val) {
             document.getElementById('area').value = val;
             updateAreaButtons();
@@ -295,14 +299,12 @@
         }
 
         window.onload = function() {
-            // 장비 패키지 실제 가격
             const EQUIP_PRICES = {
                 red: 3374,  
                 blue: 4850, 
                 black: 6850 
             };
 
-            // 시간대 트래픽 실데이터 배열 포함
             const realSeoulData = [
                 { keyword: '명동', name: '명동 남대문 북창동 관광특구', ratio20: 18, ratio30: 24, ratio40: 18, ratio50: 15, avgTicket: 8512, floatingPop: 410000, popScore: 98, comp: 45, subDist: 150, bus: 18, trafficWD: [25, 40, 85, 75, 95, 80, 50], trafficWE: [20, 30, 70, 85, 100, 90, 60] },
                 { keyword: '강남', name: '강남역', ratio20: 35, ratio30: 30, ratio40: 15, ratio50: 10, avgTicket: 15000, floatingPop: 650000, popScore: 100, comp: 80, subDist: 50, bus: 25, trafficWD: [30, 60, 95, 75, 100, 85, 60], trafficWE: [15, 30, 65, 80, 90, 85, 65] },
@@ -476,7 +478,7 @@
                         });
                     });
 
-                    // 경쟁점 마커 누락 버그 해결 (location 옵션과 useMapBounds 제거하여 반경 내 강제 검색)
+                    // 경쟁점 마커 반경 내 검색
                     const searchNearby = (coords, keyword, radius = 500) => new Promise((res) => {
                         let options = { location: new kakao.maps.LatLng(coords.lat, coords.lng), radius: radius };
                         places.keywordSearch(keyword, (result, status, pagination) => {
@@ -885,15 +887,15 @@
             }
 
             function calculateProfitability(input, data) {
-                let expectedSales = (input.area * 180) + (data['유동인구'].score * 60); 
-                let baseSales = Math.round(expectedSales / 2000) * 2000; 
-                if(baseSales < 4000) baseSales = 4000;
-                
-                const sales = [baseSales - 4000, baseSales - 2000, baseSales, baseSales + 2000, baseSales + 4000, baseSales + 6000].filter(v => v > 0);
+                const sales = [3000, 5000, 7000, 9000, 12000];
                 
                 const dRatio = (100 - input.salesRatio) / 100;
                 let html = `<table class="w-full text-sm text-center text-gray-600"><thead class="text-xs text-gray-700 bg-gray-100 border-b"><tr><th class="px-4 py-3 text-left">항목</th>`;
-                sales.forEach(s => html += `<th class="px-4 py-3">${s.toLocaleString()}만</th>`);
+                sales.forEach(s => {
+                    let label = `${s.toLocaleString()}만`;
+                    if(s === 12000) label = `1억 2,000만`;
+                    html += `<th class="px-4 py-3 whitespace-nowrap">${label}</th>`;
+                });
                 html += `</tr></thead><tbody>`;
 
                 const rows = [
@@ -919,13 +921,13 @@
                     let bgClass = "bg-white";
                     if (isTotal) bgClass = "bg-gray-50";
 
-                    html += `<tr class="border-b ${bgClass}"><td class="px-4 py-2 font-medium text-left ${isP || isM ?'font-bold':''}">${row.k}</td>`;
+                    html += `<tr class="border-b ${bgClass}"><td class="px-4 py-2 font-medium text-left ${isP || isM ?'font-bold':''} whitespace-nowrap">${row.k}</td>`;
                     tableData.forEach(d => {
                         const val = d[row.k];
                         if (isM) {
-                            html += `<td class="px-4 py-2 font-bold ${val>0?'text-green-600':'text-red-600'}">${val.toFixed(1)}%</td>`;
+                            html += `<td class="px-4 py-2 font-bold ${val>0?'text-green-600':'text-red-600'} whitespace-nowrap">${val.toFixed(1)}%</td>`;
                         } else {
-                            html += `<td class="px-4 py-2 ${isP?'font-bold '+(val>0?'text-green-600':'text-red-600'):''}">${(val/10000).toLocaleString('ko-KR')} 만원</td>`;
+                            html += `<td class="px-4 py-2 ${isP?'font-bold '+(val>0?'text-green-600':'text-red-600'):''} whitespace-nowrap">${(val/10000).toLocaleString('ko-KR')} 만원</td>`;
                         }
                     });
                     html += `</tr>`;
